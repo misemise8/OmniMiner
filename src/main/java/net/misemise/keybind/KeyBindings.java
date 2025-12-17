@@ -4,7 +4,7 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.util.Identifier;
-import net.misemise.OreMiner;
+import net.misemise.OmniMiner;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -35,7 +35,7 @@ public class KeyBindings {
                 OREMINER_CATEGORY
         ));
 
-        OreMiner.LOGGER.info("KeyBindings registered");
+        OmniMiner.LOGGER.info("KeyBindings registered");
     }
 
     public static boolean isVeinMinerKeyPressed() {

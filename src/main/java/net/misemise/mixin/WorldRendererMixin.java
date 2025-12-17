@@ -3,7 +3,7 @@ package net.misemise.mixin;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.ObjectAllocator;
-import net.misemise.OreMiner;
+import net.misemise.OmniMiner;
 import net.misemise.client.BlockHighlightRenderer;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
@@ -45,7 +45,7 @@ public abstract class WorldRendererMixin {
             BlockHighlightRenderer.render(immediate, camera, positionMatrix);
 
         } catch (Exception e) {
-            OreMiner.LOGGER.error("Failed to render block highlights", e);
+            OmniMiner.LOGGER.error("Failed to render block highlights", e);
         }
     }
 }

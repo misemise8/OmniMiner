@@ -3,9 +3,8 @@ package net.misemise.client;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
-import net.misemise.OreMiner;
+import net.misemise.OmniMiner;
 
 /**
  * 一括破壊した鉱石の数をHUDに表示
@@ -19,7 +18,7 @@ public class VeinMiningHud {
     private static boolean showPreview = false;
 
     public static void register() {
-        OreMiner.LOGGER.info("Registering VeinMiningHud...");
+        OmniMiner.LOGGER.info("Registering VeinMiningHud...");
 
         // 破壊後のブロック数表示
         HudRenderCallback.EVENT.register((drawContext, tickDelta) -> {
@@ -39,7 +38,7 @@ public class VeinMiningHud {
             long currentTime = System.currentTimeMillis();
             if (currentTime - lastMineTime > DISPLAY_DURATION) {
                 if (blocksMinedCount > 0) {
-                    OreMiner.LOGGER.info("HUD display timeout - resetting count from {}", blocksMinedCount);
+                    OmniMiner.LOGGER.info("HUD display timeout - resetting count from {}", blocksMinedCount);
                     blocksMinedCount = 0;
                 }
                 return;
@@ -63,7 +62,7 @@ public class VeinMiningHud {
             drawContext.drawTextWithShadow(textRenderer, message, x, y, 0xFFFFAA00);
 
             if (currentTime - lastMineTime < 100) {
-                OreMiner.LOGGER.info("Drawing HUD: count={}, x={}, y={}", blocksMinedCount, x, y);
+                OmniMiner.LOGGER.info("Drawing HUD: count={}, x={}, y={}", blocksMinedCount, x, y);
             }
         });
 
@@ -92,11 +91,11 @@ public class VeinMiningHud {
             drawContext.drawTextWithShadow(textRenderer, previewMessage, x, y, 0xFFFFAA00);
         });
 
-        OreMiner.LOGGER.info("VeinMiningHud registered successfully");
+        OmniMiner.LOGGER.info("VeinMiningHud registered successfully");
     }
 
     public static void setBlocksMinedCount(int count) {
-        OreMiner.LOGGER.info("VeinMiningHud.setBlocksMinedCount called with count: {}", count);
+        OmniMiner.LOGGER.info("VeinMiningHud.setBlocksMinedCount called with count: {}", count);
         blocksMinedCount = count;
         lastMineTime = System.currentTimeMillis();
     }

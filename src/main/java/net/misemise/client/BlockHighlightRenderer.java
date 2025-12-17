@@ -6,7 +6,7 @@ import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.misemise.OreMiner;
+import net.misemise.OmniMiner;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
 
@@ -16,7 +16,7 @@ public class BlockHighlightRenderer {
     private static final Set<BlockPos> highlightedBlocks = new HashSet<>();
 
     public static void register() {
-        OreMiner.LOGGER.info("BlockHighlightRenderer initialized");
+        OmniMiner.LOGGER.info("BlockHighlightRenderer initialized");
     }
 
     /**
@@ -185,7 +185,7 @@ public class BlockHighlightRenderer {
             GL11.glDepthMask(true);
             GL11.glEnable(GL11.GL_DEPTH_TEST);
         } catch (Throwable t) {
-            OreMiner.LOGGER.error("Error rendering highlights", t);
+            OmniMiner.LOGGER.error("Error rendering highlights", t);
             try {
                 GL11.glDepthMask(true);
                 GL11.glEnable(GL11.GL_DEPTH_TEST);

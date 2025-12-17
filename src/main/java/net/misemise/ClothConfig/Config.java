@@ -3,7 +3,7 @@ package net.misemise.ClothConfig;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.fabricmc.loader.api.FabricLoader;
-import net.misemise.OreMiner;
+import net.misemise.OmniMiner;
 
 import java.io.File;
 import java.io.FileReader;
@@ -69,15 +69,15 @@ public class Config {
                     outlineThickness = data.outlineThickness;
                     toggleMode = data.toggleMode;
                 }
-                OreMiner.LOGGER.info("Config loaded from file");
+                OmniMiner.LOGGER.info("Config loaded from file");
             } catch (IOException e) {
-                OreMiner.LOGGER.error("Failed to load config", e);
+                OmniMiner.LOGGER.error("Failed to load config", e);
             }
         } else {
             save(); // デフォルト設定で保存
         }
 
-        OreMiner.LOGGER.info("Config: maxBlocks={}, searchDiagonal={}, autoCollect={}, autoCollectExp={}, debugLog={}, outlineColor={}, showBlocksMinedCount={}, showBlocksPreview={}, outlineThickness={}, toggleMode={}",
+        OmniMiner.LOGGER.info("Config: maxBlocks={}, searchDiagonal={}, autoCollect={}, autoCollectExp={}, debugLog={}, outlineColor={}, showBlocksMinedCount={}, showBlocksPreview={}, outlineThickness={}, toggleMode={}",
                 maxBlocks, searchDiagonal, autoCollect, autoCollectExp, debugLog, outlineColor, showBlocksMinedCount, showBlocksPreview, outlineThickness, toggleMode);
     }
 
@@ -99,9 +99,9 @@ public class Config {
             data.toggleMode = toggleMode;
 
             GSON.toJson(data, writer);
-            OreMiner.LOGGER.info("Config saved to file");
+            OmniMiner.LOGGER.info("Config saved to file");
         } catch (IOException e) {
-            OreMiner.LOGGER.error("Failed to save config", e);
+            OmniMiner.LOGGER.error("Failed to save config", e);
         }
     }
 

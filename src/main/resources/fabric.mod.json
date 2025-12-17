@@ -1,8 +1,8 @@
 {
 	"schemaVersion": 1,
-	"id": "oreminer",
+	"id": "omniminer",
 	"version": "${version}",
-	"name": "OreMiner",
+	"name": "OmniMiner",
 	"description": "Efficient Vein Mining Mod!!!",
 	"authors": [
 		"Misemise"
@@ -12,24 +12,24 @@
 		"contact and issue": "https://x.com/misemiseeeeeeee"
 	},
 	"license": "MIT",
-	"icon": "assets/oreminer/icon.png",
+	"icon": "assets/omniminer/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"net.misemise.OreMiner"
+			"net.misemise.OmniMiner"
 		],
 		"client": [
-			"net.misemise.client.OreMinerClient"
+			"net.misemise.client.OmniMinerClient"
 		],
 		"fabric-datagen": [
-			"net.misemise.OreMinerDataGenerator"
+			"net.misemise.OmniMinerDataGenerator"
 		],
 		"modmenu": [
 			"net.misemise.ClothConfig.ModMenuIntegration"
 		]
 	},
 	"mixins": [
-		"oreminer.mixins.json"
+		"omniminer.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.18.1",

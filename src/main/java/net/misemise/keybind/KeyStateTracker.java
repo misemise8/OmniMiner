@@ -8,7 +8,7 @@ import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.misemise.ClothConfig.Config;
 import net.misemise.ClothConfig.ConfigScreen;
-import net.misemise.OreMiner;
+import net.misemise.OmniMiner;
 import net.misemise.OreUtils;
 import net.misemise.client.BlockHighlightRenderer;
 import net.misemise.client.VeinMiningHud;
@@ -38,7 +38,7 @@ public class KeyStateTracker {
                 // キーが押された瞬間（前回は押されていなかった）
                 if (currentKeyPressed && !lastKeyState) {
                     toggledOn = !toggledOn; // 状態を反転
-                    OreMiner.LOGGER.info("Toggle mode switched: {}", toggledOn);
+                    OmniMiner.LOGGER.info("Toggle mode switched: {}", toggledOn);
                     NetworkHandler.sendKeyState(toggledOn);
                 }
                 lastKeyState = currentKeyPressed;
@@ -58,7 +58,7 @@ public class KeyStateTracker {
                 // 通常モード（押している間だけ有効）
                 // キー状態が変わった場合、サーバーに通知
                 if (currentKeyPressed != lastKeyState) {
-                    OreMiner.LOGGER.info("Key state changed: {} -> {}", lastKeyState, currentKeyPressed);
+                    OmniMiner.LOGGER.info("Key state changed: {} -> {}", lastKeyState, currentKeyPressed);
                     NetworkHandler.sendKeyState(currentKeyPressed);
                     lastKeyState = currentKeyPressed;
                 }
@@ -83,7 +83,7 @@ public class KeyStateTracker {
             }
         });
 
-        OreMiner.LOGGER.info("KeyStateTracker registered");
+        OmniMiner.LOGGER.info("KeyStateTracker registered");
     }
 
     /**

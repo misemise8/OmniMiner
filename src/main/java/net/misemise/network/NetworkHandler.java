@@ -9,7 +9,7 @@ import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
-import net.misemise.OreMiner;
+import net.misemise.OmniMiner;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,7 +19,7 @@ import java.util.UUID;
  * クライアント-サーバー間のネットワーク通信を管理
  */
 public class NetworkHandler {
-    public static final Identifier VEIN_MINER_KEY_STATE_ID = Identifier.of(OreMiner.MOD_ID, "vein_miner_key_state");
+    public static final Identifier VEIN_MINER_KEY_STATE_ID = Identifier.of(OmniMiner.MOD_ID, "vein_miner_key_state");
 
     // プレイヤーごとのキー押下状態を保存
     private static final Map<UUID, Boolean> playerKeyStates = new HashMap<>();
@@ -48,7 +48,7 @@ public class NetworkHandler {
      */
     public static void registerServer() {
         if (registered) {
-            OreMiner.LOGGER.info("Network handler already registered (server side)");
+            OmniMiner.LOGGER.info("Network handler already registered (server side)");
             return;
         }
 
@@ -62,15 +62,15 @@ public class NetworkHandler {
                 context.server().execute(() -> {
                     UUID playerId = context.player().getUuid();
                     playerKeyStates.put(playerId, payload.isPressed());
-                    OreMiner.LOGGER.info("Received key state from player {}: {}",
+                    OmniMiner.LOGGER.info("Received key state from player {}: {}",
                             context.player().getName().getString(), payload.isPressed());
                 });
             });
 
             registered = true;
-            OreMiner.LOGGER.info("Server network handler registered");
+            OmniMiner.LOGGER.info("Server network handler registered");
         } catch (IllegalArgumentException e) {
-            OreMiner.LOGGER.warn("Packet type already registered, skipping: {}", e.getMessage());
+            OmniMiner.LOGGER.warn("Packet type already registered, skipping: {}", e.getMessage());
             registered = true;
         }
 
@@ -84,19 +84,19 @@ public class NetworkHandler {
      * クライアント側のネットワーク登録
      */
     public static void registerClient() {
-        OreMiner.LOGGER.info("Client network handler initializing...");
+        OmniMiner.LOGGER.info("Client network handler initializing...");
 
         // ブロック破壊数パケットの受信処理を登録
         ClientPlayNetworking.registerGlobalReceiver(BlocksMinedCountPayload.ID, (payload, context) -> {
             context.client().execute(() -> {
-                OreMiner.LOGGER.info("Received blocks mined count: {}", payload.count());
+                OmniMiner.LOGGER.info("Received blocks mined count: {}", payload.count());
                 // VeinMiningHudに破壊数を設定
                 net.misemise.client.VeinMiningHud.setBlocksMinedCount(payload.count());
-                OreMiner.LOGGER.info("Set HUD blocks mined count to: {}", payload.count());
+                OmniMiner.LOGGER.info("Set HUD blocks mined count to: {}", payload.count());
             });
         });
 
-        OreMiner.LOGGER.info("Client network handler registered");
+        OmniMiner.LOGGER.info("Client network handler registered");
     }
 
     /**
@@ -105,7 +105,7 @@ public class NetworkHandler {
     public static void sendKeyState(boolean isPressed) {
         if (ClientPlayNetworking.canSend(VeinMinerKeyStatePayload.ID)) {
             ClientPlayNetworking.send(new VeinMinerKeyStatePayload(isPressed));
-            OreMiner.LOGGER.info("Sent key state to server: {}", isPressed);
+            OmniMiner.LOGGER.info("Sent key state to server: {}", isPressed);
         }
     }
 
@@ -114,7 +114,7 @@ public class NetworkHandler {
      */
     public static boolean isKeyPressed(UUID playerId) {
         boolean pressed = playerKeyStates.getOrDefault(playerId, false);
-        OreMiner.LOGGER.info("Checking key state for player {}: {}", playerId, pressed);
+        OmniMiner.LOGGER.info("Checking key state for player {}: {}", playerId, pressed);
         return pressed;
     }
 
@@ -127,7 +127,7 @@ public class NetworkHandler {
 
     public record BlocksMinedCountPayload(int count) implements CustomPayload {
         public static final CustomPayload.Id<BlocksMinedCountPayload> ID =
-                new CustomPayload.Id<>(Identifier.of(OreMiner.MOD_ID, "blocks_mined_count"));
+                new CustomPayload.Id<>(Identifier.of(OmniMiner.MOD_ID, "blocks_mined_count"));
 
         public static final PacketCodec<RegistryByteBuf, BlocksMinedCountPayload> CODEC =
                 PacketCodecs.INTEGER.xmap(BlocksMinedCountPayload::new, BlocksMinedCountPayload::count).cast();
@@ -143,6 +143,6 @@ public class NetworkHandler {
      */
     public static void sendBlocksMinedCount(ServerPlayerEntity player, int count) {
         ServerPlayNetworking.send(player, new BlocksMinedCountPayload(count));
-        OreMiner.LOGGER.info("Sent blocks mined count to client: {}", count);
+        OmniMiner.LOGGER.info("Sent blocks mined count to client: {}", count);
     }
 }

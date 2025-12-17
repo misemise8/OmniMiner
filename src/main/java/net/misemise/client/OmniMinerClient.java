@@ -1,15 +1,15 @@
 package net.misemise.client;
 
 import net.fabricmc.api.ClientModInitializer;
-import net.misemise.OreMiner;
+import net.misemise.OmniMiner;
 import net.misemise.keybind.KeyBindings;
 import net.misemise.keybind.KeyStateTracker;
 import net.misemise.network.NetworkHandler;
 
-public class OreMinerClient implements ClientModInitializer {
+public class OmniMinerClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
-        OreMiner.LOGGER.info("OreMinerClient initializing...");
+        OmniMiner.LOGGER.info("OreMinerClient initializing...");
 
         // クライアント側のネットワーク登録
         NetworkHandler.registerClient();
@@ -22,10 +22,10 @@ public class OreMinerClient implements ClientModInitializer {
 
         // HUDを登録
         VeinMiningHud.register();
-        OreMiner.LOGGER.info("VeinMiningHud registered");
+        OmniMiner.LOGGER.info("VeinMiningHud registered");
 
         // ブロックハイライトレンダラーを登録
         BlockHighlightRenderer.register();
-        OreMiner.LOGGER.info("BlockHighlightRenderer registered");
+        OmniMiner.LOGGER.info("BlockHighlightRenderer registered");
     }
 }
