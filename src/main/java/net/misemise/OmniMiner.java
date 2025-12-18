@@ -28,7 +28,7 @@ public class OmniMiner implements ModInitializer {
 			LOGGER.warn("NetworkHandler.registerServer() failed or already registered: {}", t.toString());
 		}
 
-		// BEFOREイベント：鉱石をつるはしで壊す場合、標準処理をキャンセルしてMod側で処理
+		// BEFOREイベント：鉱石または原木を適切なツールで壊す場合、標準処理をキャンセルしてMod側で処理
 		PlayerBlockBreakEvents.BEFORE.register((world, player, pos, state, entity) -> {
 			// クライアント側では何もしない
 			if (world.isClient()) return true;
@@ -39,19 +39,24 @@ public class OmniMiner implements ModInitializer {
 
 			ItemStack held = serverPlayer.getMainHandStack();
 
-			// つるはしで鉱石を壊す場合のみ特別処理
-			if (OreUtils.isPickaxe(held) && OreUtils.isOre(state)) {
+			// つるはしで鉱石を壊す場合のチェック
+			boolean isPickaxeAndOre = OreUtils.isPickaxe(held) && OreUtils.isOre(state);
+
+			// 斧で原木を壊す場合のチェック
+			boolean isAxeAndLog = OreUtils.isAxe(held) && OreUtils.isLog(state);
+
+			if (isPickaxeAndOre || isAxeAndLog) {
 				// キーが押されているかチェック
 				boolean keyPressed = NetworkHandler.isKeyPressed(serverPlayer.getUuid());
-				LOGGER.info("Ore break attempt: key pressed = {}", keyPressed);
 
 				if (!keyPressed) {
 					// キーが押されていない場合は通常処理
 					return true;
 				}
 
-				LOGGER.info("Vein mining triggered at {} by player {}",
-						pos, serverPlayer.getName().getString());
+				String blockType = isPickaxeAndOre ? "ore" : "log";
+				LOGGER.info("Vein mining {} triggered at {} by player {}",
+						blockType, pos, serverPlayer.getName().getString());
 
 				// Mod側で一括破壊を実行
 				OreBreaker.breakConnectedOres(serverWorld, pos, state, serverPlayer, held);

@@ -4,7 +4,6 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.registry.tag.TagKey;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
@@ -22,29 +21,14 @@ public class OreUtils {
      * アイテムがつるはしかどうかを判定
      */
     public static boolean isPickaxe(ItemStack stack) {
-        if (stack == null || stack.isEmpty()) {
-            return false;
-        }
+        return ToolUtils.isPickaxe(stack);
+    }
 
-        // タグで判定
-        try {
-            if (stack.isIn(ItemTags.PICKAXES)) {
-                return true;
-            }
-        } catch (Throwable e) {
-            LOGGER.warn("Failed to check pickaxe tag", e);
-        }
-
-        // フォールバック：クラス名チェック
-        try {
-            String itemName = stack.getItem().toString().toLowerCase();
-            String className = stack.getItem().getClass().getSimpleName().toLowerCase();
-            return itemName.contains("pickaxe") || className.contains("pick");
-        } catch (Throwable e) {
-            LOGGER.warn("Failed to check pickaxe by name", e);
-        }
-
-        return false;
+    /**
+     * アイテムが斧かどうかを判定
+     */
+    public static boolean isAxe(ItemStack stack) {
+        return ToolUtils.isAxe(stack);
     }
 
     /**
@@ -141,5 +125,12 @@ public class OreUtils {
         }
 
         return false;
+    }
+
+    /**
+     * ブロックが原木（ログ）かどうかを判定
+     */
+    public static boolean isLog(BlockState state) {
+        return LogUtils.isLog(state);
     }
 }
