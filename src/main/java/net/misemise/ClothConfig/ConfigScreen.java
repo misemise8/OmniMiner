@@ -7,145 +7,145 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
 
 public class ConfigScreen {
-        private static String lastOpenedCategory = "config.oreminer.category.mining"; // デフォルトは採掘設定
+        private static String lastOpenedCategory = "config.omniminer.category.mining"; // デフォルトは採掘設定
 
         public static Screen createConfigScreen(Screen parent) {
                 ConfigBuilder builder = ConfigBuilder.create()
-                                .setParentScreen(parent)
-                                .setTitle(Text.translatable("config.oreminer.title"))
-                                .setSavingRunnable(() -> {
-                                        Config.save();
-                                });
+                        .setParentScreen(parent)
+                        .setTitle(Text.translatable("config.omniminer.title"))
+                        .setSavingRunnable(() -> {
+                                Config.save();
+                        });
 
                 ConfigEntryBuilder entryBuilder = builder.entryBuilder();
 
                 // ==================== 採掘設定カテゴリ ====================
                 ConfigCategory mining = builder.getOrCreateCategory(
-                                Text.translatable("config.oreminer.category.mining"));
+                        Text.translatable("config.omniminer.category.mining"));
 
                 // 最大ブロック数
                 mining.addEntry(entryBuilder.startIntSlider(
-                                Text.translatable("config.oreminer.maxBlocks"),
+                                Text.translatable("config.omniminer.maxBlocks"),
                                 Config.maxBlocks,
                                 1, 512)
-                                .setDefaultValue(512)
-                                .setTooltip(Text.translatable("config.oreminer.maxBlocks.tooltip"))
-                                .setSaveConsumer(value -> Config.maxBlocks = value)
-                                .build());
+                        .setDefaultValue(64)
+                        .setTooltip(Text.translatable("config.omniminer.maxBlocks.tooltip"))
+                        .setSaveConsumer(value -> Config.maxBlocks = value)
+                        .build());
 
                 // 斜め探索
                 mining.addEntry(entryBuilder.startBooleanToggle(
-                                Text.translatable("config.oreminer.searchDiagonal"),
+                                Text.translatable("config.omniminer.searchDiagonal"),
                                 Config.searchDiagonal)
-                                .setDefaultValue(true)
-                                .setTooltip(Text.translatable("config.oreminer.searchDiagonal.tooltip"))
-                                .setSaveConsumer(value -> Config.searchDiagonal = value)
-                                .build());
+                        .setDefaultValue(true)
+                        .setTooltip(Text.translatable("config.omniminer.searchDiagonal.tooltip"))
+                        .setSaveConsumer(value -> Config.searchDiagonal = value)
+                        .build());
 
                 // 自動回収
                 mining.addEntry(entryBuilder.startBooleanToggle(
-                                Text.translatable("config.oreminer.autoCollect"),
+                                Text.translatable("config.omniminer.autoCollect"),
                                 Config.autoCollect)
-                                .setDefaultValue(true)
-                                .setTooltip(Text.translatable("config.oreminer.autoCollect.tooltip"))
-                                .setSaveConsumer(value -> Config.autoCollect = value)
-                                .build());
+                        .setDefaultValue(true)
+                        .setTooltip(Text.translatable("config.omniminer.autoCollect.tooltip"))
+                        .setSaveConsumer(value -> Config.autoCollect = value)
+                        .build());
 
                 // 経験値自動回収
                 mining.addEntry(entryBuilder.startBooleanToggle(
-                                Text.translatable("config.oreminer.autoCollectExp"),
+                                Text.translatable("config.omniminer.autoCollectExp"),
                                 Config.autoCollectExp)
-                                .setDefaultValue(true)
-                                .setTooltip(Text.translatable("config.oreminer.autoCollectExp.tooltip"))
-                                .setSaveConsumer(value -> Config.autoCollectExp = value)
-                                .build());
+                        .setDefaultValue(true)
+                        .setTooltip(Text.translatable("config.omniminer.autoCollectExp.tooltip"))
+                        .setSaveConsumer(value -> Config.autoCollectExp = value)
+                        .build());
+
+                // 葉っぱも破壊
+                mining.addEntry(entryBuilder.startBooleanToggle(
+                                Text.translatable("config.omniminer.breakLeaves"),
+                                Config.breakLeaves)
+                        .setDefaultValue(false)
+                        .setTooltip(Text.translatable("config.omniminer.breakLeaves.tooltip"))
+                        .setSaveConsumer(value -> Config.breakLeaves = value)
+                        .build());
 
                 // トグルモード
                 mining.addEntry(entryBuilder.startBooleanToggle(
-                                Text.translatable("config.oreminer.toggleMode"),
+                                Text.translatable("config.omniminer.toggleMode"),
                                 Config.toggleMode)
-                                .setDefaultValue(false)
-                                .setTooltip(Text.translatable("config.oreminer.toggleMode.tooltip"))
-                                .setSaveConsumer(value -> Config.toggleMode = value)
-                                .build());
+                        .setDefaultValue(false)
+                        .setTooltip(Text.translatable("config.omniminer.toggleMode.tooltip"))
+                        .setSaveConsumer(value -> Config.toggleMode = value)
+                        .build());
 
                 // ==================== アウトライン設定カテゴリ ====================
                 ConfigCategory outline = builder.getOrCreateCategory(
-                                Text.translatable("config.oreminer.category.outline"));
+                        Text.translatable("config.omniminer.category.outline"));
 
                 // アウトラインの色
                 outline.addEntry(entryBuilder.startSelector(
-                                Text.translatable("config.oreminer.outlineColor"),
+                                Text.translatable("config.omniminer.outlineColor"),
                                 new String[] { "Cyan", "Red", "Yellow", "Green", "Purple", "White" },
                                 getColorName(Config.outlineColor))
-                                .setDefaultValue("Cyan")
-                                .setTooltip(Text.translatable("config.oreminer.outlineColor.tooltip"))
-                                .setSaveConsumer(value -> {
-                                        Config.outlineColor = getColorIndex(value);
-                                })
-                                .build());
+                        .setDefaultValue("Cyan")
+                        .setTooltip(Text.translatable("config.omniminer.outlineColor.tooltip"))
+                        .setSaveConsumer(value -> {
+                                Config.outlineColor = getColorIndex(value);
+                        })
+                        .build());
 
-                // アウトラインの太さ（FloatFieldに変更 - Cloth Config v21互換性のため）
+                // アウトラインの太さ
                 outline.addEntry(entryBuilder.startFloatField(
-                                Text.translatable("config.oreminer.outlineThickness"),
+                                Text.translatable("config.omniminer.outlineThickness"),
                                 Config.outlineThickness)
-                                .setDefaultValue(2.0f)
-                                .setMin(1.0f)
-                                .setMax(5.0f)
-                                .setTooltip(Text.translatable("config.oreminer.outlineThickness.tooltip"))
-                                .setSaveConsumer(value -> Config.outlineThickness = value)
-                                .build());
+                        .setDefaultValue(2.0f)
+                        .setMin(1.0f)
+                        .setMax(5.0f)
+                        .setTooltip(Text.translatable("config.omniminer.outlineThickness.tooltip"))
+                        .setSaveConsumer(value -> Config.outlineThickness = value)
+                        .build());
 
                 // ==================== その他設定カテゴリ ====================
                 ConfigCategory other = builder.getOrCreateCategory(
-                                Text.translatable("config.oreminer.category.other"));
+                        Text.translatable("config.omniminer.category.other"));
 
                 // 破壊後のブロック数表示
                 other.addEntry(entryBuilder.startBooleanToggle(
-                                Text.translatable("config.oreminer.showBlocksMinedCount"),
+                                Text.translatable("config.omniminer.showBlocksMinedCount"),
                                 Config.showBlocksMinedCount)
-                                .setDefaultValue(true)
-                                .setTooltip(Text.translatable("config.oreminer.showBlocksMinedCount.tooltip"))
-                                .setSaveConsumer(value -> Config.showBlocksMinedCount = value)
-                                .build());
+                        .setDefaultValue(true)
+                        .setTooltip(Text.translatable("config.omniminer.showBlocksMinedCount.tooltip"))
+                        .setSaveConsumer(value -> Config.showBlocksMinedCount = value)
+                        .build());
 
                 // 破壊前のブロック数プレビュー
                 other.addEntry(entryBuilder.startBooleanToggle(
-                                Text.translatable("config.oreminer.showBlocksPreview"),
+                                Text.translatable("config.omniminer.showBlocksPreview"),
                                 Config.showBlocksPreview)
-                                .setDefaultValue(true)
-                                .setTooltip(Text.translatable("config.oreminer.showBlocksPreview.tooltip"))
-                                .setSaveConsumer(value -> Config.showBlocksPreview = value)
-                                .build());
+                        .setDefaultValue(true)
+                        .setTooltip(Text.translatable("config.omniminer.showBlocksPreview.tooltip"))
+                        .setSaveConsumer(value -> Config.showBlocksPreview = value)
+                        .build());
 
                 // デバッグログ
                 other.addEntry(entryBuilder.startBooleanToggle(
-                                Text.translatable("config.oreminer.debugLog"),
+                                Text.translatable("config.omniminer.debugLog"),
                                 Config.debugLog)
-                                .setDefaultValue(false)
-                                .setTooltip(Text.translatable("config.oreminer.debugLog.tooltip"))
-                                .setSaveConsumer(value -> Config.debugLog = value)
-                                .build());
+                        .setDefaultValue(false)
+                        .setTooltip(Text.translatable("config.omniminer.debugLog.tooltip"))
+                        .setSaveConsumer(value -> Config.debugLog = value)
+                        .build());
 
                 // 最後に開いたカテゴリを復元
-                if (lastOpenedCategory.equals("config.oreminer.category.outline")) {
+                if (lastOpenedCategory.equals("config.omniminer.category.outline")) {
                         builder.setFallbackCategory(outline);
-                } else if (lastOpenedCategory.equals("config.oreminer.category.other")) {
+                } else if (lastOpenedCategory.equals("config.omniminer.category.other")) {
                         builder.setFallbackCategory(other);
                 } else {
                         builder.setFallbackCategory(mining);
                 }
 
                 return builder.build();
-        }
-
-        // 開いたカテゴリを記録するメソッド
-        public static void setLastOpenedCategory(String category) {
-                lastOpenedCategory = category;
-        }
-
-        public static String getLastOpenedCategory() {
-                return lastOpenedCategory;
         }
 
         private static String getColorName(int index) {

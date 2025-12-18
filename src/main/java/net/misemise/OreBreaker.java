@@ -14,29 +14,23 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * OreBreaker - 隣接する同じ種類の鉱石を一括破壊
+ * OreBreaker - 隣接する同じ種類の鉱石・原木・葉っぱを一括破壊
  */
 public class OreBreaker {
-    private static final Logger LOGGER = LoggerFactory.getLogger("oreminer");
+    private static final Logger LOGGER = LoggerFactory.getLogger("omniminer");
 
     /**
-     * 指定位置から同じ種類の鉱石を探して一括破壊
+     * 指定位置から同じ種類のブロックを探して一括破壊
      */
     public static void breakConnectedOres(ServerWorld world, BlockPos startPos,
                                           BlockState originalState, ServerPlayerEntity player,
                                           ItemStack heldItem) {
-        if (Config.debugLog) {
-            LOGGER.info("Starting vein mining from {}", startPos);
-        }
         Set<BlockPos> visited = new HashSet<>();
 
         // 最初のブロックから開始
         dfs(world, startPos, originalState, player, heldItem, visited);
 
         int blocksCount = visited.size();
-        if (Config.debugLog) {
-            LOGGER.info("Vein mining complete: {} blocks broken", blocksCount);
-        }
 
         // クライアントに破壊したブロック数を送信
         NetworkHandler.sendBlocksMinedCount(player, blocksCount);
@@ -56,17 +50,26 @@ public class OreBreaker {
 
         BlockState currentState = world.getBlockState(pos);
 
-        // 同じ種類の鉱石かチェック
-        if (!currentState.isOf(targetState.getBlock())) {
+        // 原木を破壊している場合で、葉っぱ破壊が有効なら葉っぱも対象に含める
+        boolean isTargetLog = LogUtils.isLog(targetState);
+        boolean isCurrentLog = LogUtils.isLog(currentState);
+        boolean isCurrentLeaf = LeafUtils.isLeaf(currentState);
+
+        boolean shouldBreak = false;
+        if (isTargetLog && Config.breakLeaves) {
+            // 原木 → 原木または葉っぱ
+            shouldBreak = isCurrentLog || isCurrentLeaf;
+        } else {
+            // 通常：同じ種類のブロックのみ
+            shouldBreak = currentState.isOf(targetState.getBlock());
+        }
+
+        if (!shouldBreak) {
             return;
         }
 
         // 訪問済みにマーク
         visited.add(pos);
-
-        if (Config.debugLog) {
-            LOGGER.debug("Breaking ore at {}", pos);
-        }
 
         // ブロックを破壊してドロップを自動回収
         AutoCollector.breakAndCollect(world, pos, currentState, player, heldItem);
@@ -97,5 +100,4 @@ public class OreBreaker {
             }
         }
     }
-
 }

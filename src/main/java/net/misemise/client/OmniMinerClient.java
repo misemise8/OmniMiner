@@ -9,7 +9,7 @@ import net.misemise.network.NetworkHandler;
 public class OmniMinerClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
-        OmniMiner.LOGGER.info("OreMinerClient initializing...");
+        OmniMiner.LOGGER.info("OmniMinerClient initializing...");
 
         // クライアント側のネットワーク登録
         NetworkHandler.registerClient();

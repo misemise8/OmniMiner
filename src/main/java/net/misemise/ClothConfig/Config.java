@@ -44,10 +44,13 @@ public class Config {
     // トグルモード（true: 押すとオン/オフ切り替え, false: 押している間だけ有効）
     public static boolean toggleMode = false;
 
+    // 葉っぱも一括破壊するか
+    public static boolean breakLeaves = false;
+
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final File CONFIG_FILE = new File(
             FabricLoader.getInstance().getConfigDir().toFile(),
-            "oreminer.json"
+            "omniminer.json"
     );
 
     /**
@@ -68,6 +71,7 @@ public class Config {
                     showBlocksPreview = data.showBlocksPreview;
                     outlineThickness = data.outlineThickness;
                     toggleMode = data.toggleMode;
+                    breakLeaves = data.breakLeaves;
                 }
                 OmniMiner.LOGGER.info("Config loaded from file");
             } catch (IOException e) {
@@ -76,9 +80,6 @@ public class Config {
         } else {
             save(); // デフォルト設定で保存
         }
-
-        OmniMiner.LOGGER.info("Config: maxBlocks={}, searchDiagonal={}, autoCollect={}, autoCollectExp={}, debugLog={}, outlineColor={}, showBlocksMinedCount={}, showBlocksPreview={}, outlineThickness={}, toggleMode={}",
-                maxBlocks, searchDiagonal, autoCollect, autoCollectExp, debugLog, outlineColor, showBlocksMinedCount, showBlocksPreview, outlineThickness, toggleMode);
     }
 
     /**
@@ -97,6 +98,7 @@ public class Config {
             data.showBlocksPreview = showBlocksPreview;
             data.outlineThickness = outlineThickness;
             data.toggleMode = toggleMode;
+            data.breakLeaves = breakLeaves;
 
             GSON.toJson(data, writer);
             OmniMiner.LOGGER.info("Config saved to file");
@@ -116,5 +118,6 @@ public class Config {
         boolean showBlocksPreview = true;
         float outlineThickness = 2.0f;
         boolean toggleMode = false;
+        boolean breakLeaves = false;
     }
 }

@@ -8,8 +8,10 @@ import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.misemise.ClothConfig.Config;
 import net.misemise.ClothConfig.ConfigScreen;
+import net.misemise.LogUtils;
 import net.misemise.OmniMiner;
 import net.misemise.OreUtils;
+import net.misemise.ToolUtils;
 import net.misemise.client.BlockHighlightRenderer;
 import net.misemise.client.VeinMiningHud;
 import net.misemise.network.NetworkHandler;
@@ -105,8 +107,16 @@ public class KeyStateTracker {
         BlockPos targetPos = blockHit.getBlockPos();
         BlockState targetState = client.world.getBlockState(targetPos);
 
-        // 鉱石かつつるはしを持っている場合のみハイライト
-        if (!OreUtils.isOre(targetState) || !OreUtils.isPickaxe(client.player.getMainHandStack())) {
+        // ツールの種類を判定
+        boolean isPickaxe = ToolUtils.isPickaxe(client.player.getMainHandStack());
+        boolean isAxe = ToolUtils.isAxe(client.player.getMainHandStack());
+
+        // ブロックの種類を判定
+        boolean isOre = isPickaxe && OreUtils.isOre(targetState);
+        boolean isLog = isAxe && LogUtils.isLog(targetState);
+
+        // つるはし+鉱石、または斧+原木の組み合わせでのみハイライト
+        if (!isOre && !isLog) {
             if (lastTargetPos != null) {
                 BlockHighlightRenderer.clearHighlights();
                 VeinMiningHud.clearPreview();
@@ -124,7 +134,7 @@ public class KeyStateTracker {
         lastTargetPos = targetPos;
 
         // 一括破壊対象のブロックを計算
-        Set<BlockPos> connectedBlocks = findConnectedOres(client, targetPos, targetState);
+        Set<BlockPos> connectedBlocks = findConnectedBlocks(client, targetPos, targetState);
         BlockHighlightRenderer.setHighlightedBlocks(connectedBlocks);
 
         // ブロック数を保存してHUDに表示（設定がオンの場合）
@@ -137,9 +147,9 @@ public class KeyStateTracker {
     }
 
     /**
-     * 接続された鉱石を探す（サーバー側のOreBreaker.dfsと同じロジック）
+     * 接続された鉱石または原木を探す（サーバー側のOreBreaker.dfsと同じロジック）
      */
-    private static Set<BlockPos> findConnectedOres(MinecraftClient client, BlockPos startPos, BlockState targetState) {
+    private static Set<BlockPos> findConnectedBlocks(MinecraftClient client, BlockPos startPos, BlockState targetState) {
         Set<BlockPos> visited = new HashSet<>();
         dfs(client, startPos, targetState, visited);
         return visited;
@@ -158,7 +168,7 @@ public class KeyStateTracker {
 
         BlockState currentState = client.world.getBlockState(pos);
 
-        // 同じ種類の鉱石かチェック
+        // 同じ種類のブロックかチェック
         if (!currentState.isOf(targetState.getBlock())) {
             return;
         }

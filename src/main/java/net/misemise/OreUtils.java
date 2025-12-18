@@ -10,10 +10,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class OreUtils {
-    private static final Logger LOGGER = LoggerFactory.getLogger("oreminer");
-    private static final String MOD_ID = "oreminer";
+    private static final Logger LOGGER = LoggerFactory.getLogger("omniminer");
+    private static final String MOD_ID = "omniminer";
 
-    // カスタムタグ (data/oreminer/tags/blocks/ores.json)
+    // カスタムタグ (data/omniminer/tags/blocks/ores.json)
     public static final TagKey<Block> OREMINER_ORES =
             TagKey.of(RegistryKeys.BLOCK, Identifier.of(MOD_ID, "ores"));
 

@@ -17,7 +17,7 @@ import java.util.List;
  * ブロックを破壊してドロップを自動回収するユーティリティクラス
  */
 public class AutoCollector {
-    private static final Logger LOGGER = LoggerFactory.getLogger("oreminer");
+    private static final Logger LOGGER = LoggerFactory.getLogger("omniminer");
 
     /**
      * ブロックを破壊し、ドロップアイテムと経験値を処理

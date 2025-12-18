@@ -15,13 +15,13 @@ public class KeyBindings {
     public static KeyBinding openConfigKey;
 
     public static final KeyBinding.Category OREMINER_CATEGORY = KeyBinding.Category.create(
-            Identifier.of("oreminer", "general")
+            Identifier.of("omniminer", "general")
     );
 
     public static void register() {
         // 一括採掘キー (V) - ゲームプレイカテゴリー
         veinMinerKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.oreminer.veinminer",
+                "key.omniminer.veinminer",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_V,
                 OREMINER_CATEGORY
@@ -29,7 +29,7 @@ public class KeyBindings {
 
         // 設定画面を開くキー (O) - その他カテゴリー
         openConfigKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.oreminer.openconfig",
+                "key.omniminer.openconfig",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_O,
                 OREMINER_CATEGORY

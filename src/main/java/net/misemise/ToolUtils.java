@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ToolUtils {
-    private static final Logger LOGGER = LoggerFactory.getLogger("oreminer");
+    private static final Logger LOGGER = LoggerFactory.getLogger("omniminer");
 
     /**
      * アイテムがつるはしかどうかを判定

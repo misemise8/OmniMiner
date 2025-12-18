@@ -11,12 +11,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class OmniMiner implements ModInitializer {
-	public static final String MOD_ID = "oreminer";
+	public static final String MOD_ID = "omniminer";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
 	@Override
 	public void onInitialize() {
-		LOGGER.info("OreMiner initialized!");
+		LOGGER.info("OmniMiner initialized!");
 
 		// 設定を読み込む
 		Config.load();
@@ -39,13 +39,15 @@ public class OmniMiner implements ModInitializer {
 
 			ItemStack held = serverPlayer.getMainHandStack();
 
-			// つるはしで鉱石を壊す場合のチェック
-			boolean isPickaxeAndOre = OreUtils.isPickaxe(held) && OreUtils.isOre(state);
+			// ツールの種類を判定
+			boolean isPickaxe = ToolUtils.isPickaxe(held);
+			boolean isAxe = ToolUtils.isAxe(held);
 
-			// 斧で原木を壊す場合のチェック
-			boolean isAxeAndLog = OreUtils.isAxe(held) && OreUtils.isLog(state);
+			// ブロックの種類を判定
+			boolean isOre = isPickaxe && OreUtils.isOre(state);
+			boolean isLog = isAxe && LogUtils.isLog(state);
 
-			if (isPickaxeAndOre || isAxeAndLog) {
+			if (isOre || isLog) {
 				// キーが押されているかチェック
 				boolean keyPressed = NetworkHandler.isKeyPressed(serverPlayer.getUuid());
 
@@ -54,7 +56,7 @@ public class OmniMiner implements ModInitializer {
 					return true;
 				}
 
-				String blockType = isPickaxeAndOre ? "ore" : "log";
+				String blockType = isOre ? "ore" : "log";
 				LOGGER.info("Vein mining {} triggered at {} by player {}",
 						blockType, pos, serverPlayer.getName().getString());
 
