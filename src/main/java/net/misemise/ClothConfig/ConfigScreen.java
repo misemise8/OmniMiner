@@ -7,7 +7,7 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
 
 public class ConfigScreen {
-        private static String lastOpenedCategory = "config.omniminer.category.mining"; // デフォルトは採掘設定
+        private static String lastOpenedCategory = "config.omniminer.category.mining";
 
         public static Screen createConfigScreen(Screen parent) {
                 ConfigBuilder builder = ConfigBuilder.create()
@@ -23,12 +23,13 @@ public class ConfigScreen {
                 ConfigCategory mining = builder.getOrCreateCategory(
                         Text.translatable("config.omniminer.category.mining"));
 
-                // 最大ブロック数
-                mining.addEntry(entryBuilder.startIntSlider(
+                // 最大ブロック数（IntFieldに変更）
+                mining.addEntry(entryBuilder.startIntField(
                                 Text.translatable("config.omniminer.maxBlocks"),
-                                Config.maxBlocks,
-                                1, 512)
+                                Config.maxBlocks)
                         .setDefaultValue(64)
+                        .setMin(1)
+                        .setMax(512)
                         .setTooltip(Text.translatable("config.omniminer.maxBlocks.tooltip"))
                         .setSaveConsumer(value -> Config.maxBlocks = value)
                         .build());

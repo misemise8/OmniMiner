@@ -7,10 +7,11 @@ import net.minecraft.text.Text;
 import net.misemise.OmniMiner;
 
 /**
- * 一括破壊した鉱石の数をHUDに表示
+ * 一括破壊したブロックの数をHUDに表示
  */
 public class VeinMiningHud {
     private static int blocksMinedCount = 0;
+    private static String blockType = "ore";
     private static long lastMineTime = 0;
     private static final long DISPLAY_DURATION = 3000; // 3秒間表示
 
@@ -18,8 +19,6 @@ public class VeinMiningHud {
     private static boolean showPreview = false;
 
     public static void register() {
-        OmniMiner.LOGGER.info("Registering VeinMiningHud...");
-
         // 破壊後のブロック数表示
         HudRenderCallback.EVENT.register((drawContext, tickDelta) -> {
             MinecraftClient client = MinecraftClient.getInstance();
@@ -38,7 +37,6 @@ public class VeinMiningHud {
             long currentTime = System.currentTimeMillis();
             if (currentTime - lastMineTime > DISPLAY_DURATION) {
                 if (blocksMinedCount > 0) {
-                    OmniMiner.LOGGER.info("HUD display timeout - resetting count from {}", blocksMinedCount);
                     blocksMinedCount = 0;
                 }
                 return;
@@ -51,7 +49,14 @@ public class VeinMiningHud {
             int screenWidth = client.getWindow().getScaledWidth();
             int screenHeight = client.getWindow().getScaledHeight();
 
-            String messageStr = blocksMinedCount + " ores mined!";
+            // ブロックタイプに応じてメッセージを変更
+            String messageStr;
+            if ("log".equals(blockType)) {
+                messageStr = blocksMinedCount + " logs chopped!";
+            } else {
+                messageStr = blocksMinedCount + " ores mined!";
+            }
+
             Text message = Text.literal(messageStr);
             int textWidth = textRenderer.getWidth(messageStr);
 
@@ -60,10 +65,6 @@ public class VeinMiningHud {
 
             // テキストを描画
             drawContext.drawTextWithShadow(textRenderer, message, x, y, 0xFFFFAA00);
-
-            if (currentTime - lastMineTime < 100) {
-                OmniMiner.LOGGER.info("Drawing HUD: count={}, x={}, y={}", blocksMinedCount, x, y);
-            }
         });
 
         // プレビュー表示用のHUDコールバック
@@ -90,18 +91,11 @@ public class VeinMiningHud {
             // プレビューテキストを描画（破壊後と同じオレンジ色）
             drawContext.drawTextWithShadow(textRenderer, previewMessage, x, y, 0xFFFFAA00);
         });
-
-        OmniMiner.LOGGER.info("VeinMiningHud registered successfully");
     }
 
-    public static void setBlocksMinedCount(int count) {
-        OmniMiner.LOGGER.info("VeinMiningHud.setBlocksMinedCount called with count: {}", count);
+    public static void setBlocksMinedCount(int count, String type) {
         blocksMinedCount = count;
-        lastMineTime = System.currentTimeMillis();
-    }
-
-    public static void addBlocksMined(int count) {
-        blocksMinedCount += count;
+        blockType = type;
         lastMineTime = System.currentTimeMillis();
     }
 

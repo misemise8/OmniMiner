@@ -44,59 +44,58 @@ public class NetworkHandler {
     }
 
     /**
+     * ブロック破壊数パケット（ブロックタイプ付き）
+     */
+    public record BlocksMinedCountPayload(int count, String blockType) implements CustomPayload {
+        public static final CustomPayload.Id<BlocksMinedCountPayload> ID =
+                new CustomPayload.Id<>(Identifier.of(OmniMiner.MOD_ID, "blocks_mined_count"));
+
+        public static final PacketCodec<RegistryByteBuf, BlocksMinedCountPayload> CODEC = PacketCodec.tuple(
+                PacketCodecs.INTEGER, BlocksMinedCountPayload::count,
+                PacketCodecs.STRING, BlocksMinedCountPayload::blockType,
+                BlocksMinedCountPayload::new
+        );
+
+        @Override
+        public Id<? extends CustomPayload> getId() {
+            return ID;
+        }
+    }
+
+    /**
      * サーバー側のネットワーク登録
      */
     public static void registerServer() {
         if (registered) {
-            OmniMiner.LOGGER.info("Network handler already registered (server side)");
             return;
         }
 
         try {
             PayloadTypeRegistry.playC2S().register(VeinMinerKeyStatePayload.ID, VeinMinerKeyStatePayload.CODEC);
-
-            // ブロック破壊数パケット登録（サーバーからクライアントへ）
             PayloadTypeRegistry.playS2C().register(BlocksMinedCountPayload.ID, BlocksMinedCountPayload.CODEC);
 
             ServerPlayNetworking.registerGlobalReceiver(VeinMinerKeyStatePayload.ID, (payload, context) -> {
                 context.server().execute(() -> {
                     UUID playerId = context.player().getUuid();
                     playerKeyStates.put(playerId, payload.isPressed());
-                    OmniMiner.LOGGER.info("Received key state from player {}: {}",
-                            context.player().getName().getString(), payload.isPressed());
                 });
             });
 
             registered = true;
-            OmniMiner.LOGGER.info("Server network handler registered");
         } catch (IllegalArgumentException e) {
-            OmniMiner.LOGGER.warn("Packet type already registered, skipping: {}", e.getMessage());
             registered = true;
         }
-
-
     }
 
     /**
      * クライアント側のネットワーク登録
      */
-    /**
-     * クライアント側のネットワーク登録
-     */
     public static void registerClient() {
-        OmniMiner.LOGGER.info("Client network handler initializing...");
-
-        // ブロック破壊数パケットの受信処理を登録
         ClientPlayNetworking.registerGlobalReceiver(BlocksMinedCountPayload.ID, (payload, context) -> {
             context.client().execute(() -> {
-                OmniMiner.LOGGER.info("Received blocks mined count: {}", payload.count());
-                // VeinMiningHudに破壊数を設定
-                net.misemise.client.VeinMiningHud.setBlocksMinedCount(payload.count());
-                OmniMiner.LOGGER.info("Set HUD blocks mined count to: {}", payload.count());
+                net.misemise.client.VeinMiningHud.setBlocksMinedCount(payload.count(), payload.blockType());
             });
         });
-
-        OmniMiner.LOGGER.info("Client network handler registered");
     }
 
     /**
@@ -105,7 +104,6 @@ public class NetworkHandler {
     public static void sendKeyState(boolean isPressed) {
         if (ClientPlayNetworking.canSend(VeinMinerKeyStatePayload.ID)) {
             ClientPlayNetworking.send(new VeinMinerKeyStatePayload(isPressed));
-            OmniMiner.LOGGER.info("Sent key state to server: {}", isPressed);
         }
     }
 
@@ -113,9 +111,7 @@ public class NetworkHandler {
      * プレイヤーがキーを押しているかチェック
      */
     public static boolean isKeyPressed(UUID playerId) {
-        boolean pressed = playerKeyStates.getOrDefault(playerId, false);
-        OmniMiner.LOGGER.info("Checking key state for player {}: {}", playerId, pressed);
-        return pressed;
+        return playerKeyStates.getOrDefault(playerId, false);
     }
 
     /**
@@ -125,24 +121,10 @@ public class NetworkHandler {
         playerKeyStates.remove(playerId);
     }
 
-    public record BlocksMinedCountPayload(int count) implements CustomPayload {
-        public static final CustomPayload.Id<BlocksMinedCountPayload> ID =
-                new CustomPayload.Id<>(Identifier.of(OmniMiner.MOD_ID, "blocks_mined_count"));
-
-        public static final PacketCodec<RegistryByteBuf, BlocksMinedCountPayload> CODEC =
-                PacketCodecs.INTEGER.xmap(BlocksMinedCountPayload::new, BlocksMinedCountPayload::count).cast();
-
-        @Override
-        public Id<? extends CustomPayload> getId() {
-            return ID;
-        }
-    }
-
     /**
-     * 破壊したブロック数をクライアントに送信
+     * 破壊したブロック数をクライアントに送信（ブロックタイプ付き）
      */
-    public static void sendBlocksMinedCount(ServerPlayerEntity player, int count) {
-        ServerPlayNetworking.send(player, new BlocksMinedCountPayload(count));
-        OmniMiner.LOGGER.info("Sent blocks mined count to client: {}", count);
+    public static void sendBlocksMinedCount(ServerPlayerEntity player, int count, String blockType) {
+        ServerPlayNetworking.send(player, new BlocksMinedCountPayload(count, blockType));
     }
 }
