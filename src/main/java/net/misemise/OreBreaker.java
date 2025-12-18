@@ -11,6 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Set;
 
 /**
@@ -26,22 +28,25 @@ public class OreBreaker {
                                           BlockState originalState, ServerPlayerEntity player,
                                           ItemStack heldItem) {
         Set<BlockPos> visited = new HashSet<>();
-        Set<BlockPos> logPositions = new HashSet<>(); // 原木の位置を記録
+        Set<BlockPos> logPositions = new HashSet<>();
 
         // 原木かどうかを判定
         boolean isLog = LogUtils.isLog(originalState);
 
-        // 最初のブロックから開始
+        // 最初のブロックから開始（原木/鉱石のみ）
         dfs(world, startPos, originalState, player, heldItem, visited, logPositions, isLog);
 
+        // 原木を破壊した数（葉っぱを除く）
+        int mainBlockCount = visited.size();
+
         // 葉っぱ破壊が有効で、原木を破壊した場合
-        if (isLog && Config.breakLeaves) {
-            breakNearbyLeaves(world, logPositions, player, heldItem, visited);
+        if (isLog && Config.breakLeaves && !logPositions.isEmpty()) {
+            breakNearbyLeaves(world, logPositions, player, heldItem);
         }
 
-        // ブロックタイプを判定して送信
+        // ブロックタイプを判定して送信（葉っぱの数は含めない）
         String blockType = isLog ? "log" : "ore";
-        NetworkHandler.sendBlocksMinedCount(player, visited.size(), blockType);
+        NetworkHandler.sendBlocksMinedCount(player, mainBlockCount, blockType);
     }
 
     private static void dfs(ServerWorld world, BlockPos pos, BlockState targetState,
@@ -101,47 +106,61 @@ public class OreBreaker {
     }
 
     /**
-     * 原木の周りの葉っぱを破壊
+     * 原木の周りの葉っぱを破壊（BFS方式で広範囲を探索）
      */
     private static void breakNearbyLeaves(ServerWorld world, Set<BlockPos> logPositions,
-                                          ServerPlayerEntity player, ItemStack heldItem,
-                                          Set<BlockPos> alreadyBroken) {
-        Set<BlockPos> leavesToBreak = new HashSet<>();
+                                          ServerPlayerEntity player, ItemStack heldItem) {
+        Set<BlockPos> leavesVisited = new HashSet<>();
+        Queue<BlockPos> leafQueue = new LinkedList<>();
 
-        // 各原木の周囲の葉っぱを探す
+        // 各原木の周囲5ブロック以内から葉っぱを探す
         for (BlockPos logPos : logPositions) {
-            findNearbyLeaves(world, logPos, leavesToBreak, alreadyBroken);
-        }
+            for (int dx = -5; dx <= 5; dx++) {
+                for (int dy = -5; dy <= 5; dy++) {
+                    for (int dz = -5; dz <= 5; dz++) {
+                        BlockPos checkPos = logPos.add(dx, dy, dz);
 
-        // 葉っぱを破壊
-        for (BlockPos leafPos : leavesToBreak) {
-            BlockState leafState = world.getBlockState(leafPos);
-            if (LeafUtils.isLeaf(leafState)) {
-                alreadyBroken.add(leafPos);
-                AutoCollector.breakAndCollect(world, leafPos, leafState, player, heldItem);
+                        if (leavesVisited.contains(checkPos)) {
+                            continue;
+                        }
+
+                        BlockState state = world.getBlockState(checkPos);
+                        if (LeafUtils.isLeaf(state)) {
+                            leavesVisited.add(checkPos);
+                            leafQueue.add(checkPos);
+                        }
+                    }
+                }
             }
         }
-    }
 
-    /**
-     * 原木の周囲2ブロック以内の葉っぱを探す
-     */
-    private static void findNearbyLeaves(ServerWorld world, BlockPos logPos, Set<BlockPos> leavesToBreak,
-                                         Set<BlockPos> alreadyBroken) {
-        // 原木から2ブロック以内を探索
-        for (int dx = -2; dx <= 2; dx++) {
-            for (int dy = -2; dy <= 2; dy++) {
-                for (int dz = -2; dz <= 2; dz++) {
-                    BlockPos checkPos = logPos.add(dx, dy, dz);
+        // BFSで葉っぱを連鎖的に探索して破壊
+        while (!leafQueue.isEmpty()) {
+            BlockPos leafPos = leafQueue.poll();
+            BlockState leafState = world.getBlockState(leafPos);
 
-                    // 既に破壊済みならスキップ
-                    if (alreadyBroken.contains(checkPos) || leavesToBreak.contains(checkPos)) {
-                        continue;
-                    }
+            if (LeafUtils.isLeaf(leafState)) {
+                // 葉っぱを破壊
+                AutoCollector.breakAndCollect(world, leafPos, leafState, player, heldItem);
 
-                    BlockState state = world.getBlockState(checkPos);
-                    if (LeafUtils.isLeaf(state)) {
-                        leavesToBreak.add(checkPos);
+                // 隣接する葉っぱも探索（3ブロック以内）
+                for (int dx = -3; dx <= 3; dx++) {
+                    for (int dy = -3; dy <= 3; dy++) {
+                        for (int dz = -3; dz <= 3; dz++) {
+                            if (dx == 0 && dy == 0 && dz == 0) continue;
+
+                            BlockPos nearbyPos = leafPos.add(dx, dy, dz);
+
+                            if (leavesVisited.contains(nearbyPos)) {
+                                continue;
+                            }
+
+                            BlockState nearbyState = world.getBlockState(nearbyPos);
+                            if (LeafUtils.isLeaf(nearbyState)) {
+                                leavesVisited.add(nearbyPos);
+                                leafQueue.add(nearbyPos);
+                            }
+                        }
                     }
                 }
             }
