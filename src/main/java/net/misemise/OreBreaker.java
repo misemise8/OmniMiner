@@ -19,17 +19,34 @@ import java.util.Set;
 /**
  * OreBreaker - 隣接する同じ種類の鉱石・原木・葉っぱを一括破壊
  */
-
-
 public class OreBreaker {
     private static final Logger LOGGER = LoggerFactory.getLogger("omniminer");
 
     /**
      * 指定位置から同じ種類のブロックを探して一括破壊
+     * 一括破壊全体で耐久値は1だけ消費
      */
     public static void breakConnectedOres(ServerWorld world, BlockPos startPos,
                                           BlockState originalState, ServerPlayerEntity player,
                                           ItemStack heldItem) {
+        // ★★★ 一括破壊の開始時に耐久値を1だけ消費 ★★★
+        if (heldItem != null && !heldItem.isEmpty() && heldItem.isDamageable()) {
+            heldItem.damage(1, player, net.minecraft.entity.EquipmentSlot.MAINHAND);
+
+            if (Config.debugLog) {
+                LOGGER.info("Consumed 1 durability for vein mining: {}/{}",
+                        heldItem.getMaxDamage() - heldItem.getDamage(), heldItem.getMaxDamage());
+            }
+
+            // ツールが壊れたかチェック
+            if (heldItem.isEmpty() || heldItem.getCount() == 0) {
+                if (Config.debugLog) {
+                    LOGGER.info("Tool broke at the start of vein mining");
+                }
+                return; // ツールが壊れたので処理を中断
+            }
+        }
+
         Set<BlockPos> visited = new HashSet<>();
         Set<BlockPos> logPositions = new HashSet<>();
 
@@ -80,7 +97,7 @@ public class OreBreaker {
             logPositions.add(pos);
         }
 
-        // ブロックを破壊してドロップを自動回収
+        // ブロックを破壊してドロップを自動回収（耐久値は消費しない）
         AutoCollector.breakAndCollect(world, pos, currentState, player, heldItem);
 
         // 隣接ブロックを再帰的に処理
@@ -161,7 +178,7 @@ public class OreBreaker {
             BlockState currentState = world.getBlockState(currentPos);
             if (!LeafUtils.isLeaf(currentState)) continue;
 
-            // 葉っぱを破壊
+            // 葉っぱを破壊（耐久値は消費しない）
             AutoCollector.breakAndCollect(world, currentPos, currentState, player, heldItem);
 
             // 隣接する葉っぱを探索（距離を +1 する）

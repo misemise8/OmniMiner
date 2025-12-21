@@ -21,6 +21,7 @@ public class AutoCollector {
 
     /**
      * ブロックを破壊し、ドロップアイテムと経験値を処理
+     * 注：耐久値の消費はOreBreaker側で一括破壊の最初に1回だけ行う
      */
     public static void breakAndCollect(ServerWorld world, BlockPos pos, BlockState state,
                                        ServerPlayerEntity player, ItemStack tool) {
@@ -66,7 +67,6 @@ public class AutoCollector {
                 }
             }
 
-            // ★★★ ここから修正: シルクタッチの場合は経験値を出さない ★★★
             // 経験値の処理（シルクタッチの場合は経験値を出さない）
             if (!hasSilkTouch(tool)) {
                 int expAmount = getExperienceFromOre(state);
@@ -96,7 +96,6 @@ public class AutoCollector {
             } else if (Config.debugLog) {
                 LOGGER.info("Silk Touch detected - no experience dropped");
             }
-            // ★★★ ここまで修正 ★★★
 
         } catch (Exception e) {
             LOGGER.error("Failed to break and collect block at {}", pos, e);
@@ -141,7 +140,6 @@ public class AutoCollector {
         return 0;
     }
 
-    // ★★★ 新規追加: シルクタッチ判定メソッド ★★★
     /**
      * ツールにシルクタッチエンチャントがついているか確認
      */
@@ -163,5 +161,4 @@ public class AutoCollector {
             return false;
         }
     }
-    // ★★★ ここまで追加 ★★★
 }
