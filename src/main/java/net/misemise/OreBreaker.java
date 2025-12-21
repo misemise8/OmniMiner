@@ -19,6 +19,8 @@ import java.util.Set;
 /**
  * OreBreaker - 隣接する同じ種類の鉱石・原木・葉っぱを一括破壊
  */
+
+
 public class OreBreaker {
     private static final Logger LOGGER = LoggerFactory.getLogger("omniminer");
 
@@ -106,15 +108,28 @@ public class OreBreaker {
         }
     }
 
+    private static class LeafNode {
+        BlockPos pos;
+        int distance;
+
+        LeafNode(BlockPos pos, int distance) {
+            this.pos = pos;
+            this.distance = distance;
+        }
+    }
+
     /**
      * 原木の周りの葉っぱを破壊（BFS方式で広範囲を探索）
      */
     private static void breakNearbyLeaves(ServerWorld world, Set<BlockPos> logPositions,
                                           ServerPlayerEntity player, ItemStack heldItem) {
-        Set<BlockPos> leavesVisited = new HashSet<>();
-        Queue<BlockPos> leafQueue = new LinkedList<>();
+        Set<BlockPos> visited = new HashSet<>();
+        Queue<LeafNode> queue = new LinkedList<>();
 
-        // 1. 破壊した各原木の「すぐ隣（26方向）」にある葉っぱを起点にする
+        // 設定から最大距離を取得（デフォルトで8〜10程度がおすすめ）
+        int maxLeafDistance = 10;
+
+        // 1. 各原木の隣接26方向にある葉っぱを距離「1」として登録
         for (BlockPos logPos : logPositions) {
             for (int dx = -1; dx <= 1; dx++) {
                 for (int dy = -1; dy <= 1; dy++) {
@@ -122,51 +137,50 @@ public class OreBreaker {
                         if (dx == 0 && dy == 0 && dz == 0) continue;
 
                         BlockPos neighbor = logPos.add(dx, dy, dz);
-                        BlockState state = world.getBlockState(neighbor);
+                        if (visited.contains(neighbor)) continue;
 
-                        // 葉っぱであり、かつプレイヤーが置いたものではない場合
+                        BlockState state = world.getBlockState(neighbor);
                         if (LeafUtils.isLeaf(state) && !state.get(Properties.PERSISTENT)) {
-                            if (leavesVisited.add(neighbor)) {
-                                leafQueue.add(neighbor);
-                            }
+                            visited.add(neighbor);
+                            queue.add(new LeafNode(neighbor, 1));
                         }
                     }
                 }
             }
         }
 
-        // 2. BFS（幅優先探索）で隣接する葉っぱのみを辿る
-        while (!leafQueue.isEmpty()) {
-            BlockPos leafPos = leafQueue.poll();
-            BlockState leafState = world.getBlockState(leafPos);
+        // 2. BFS（幅優先探索）で、設定した最大距離まで探索
+        while (!queue.isEmpty()) {
+            LeafNode current = queue.poll();
+            BlockPos currentPos = current.pos;
+            int currentDist = current.distance;
 
-            // 念のため再チェック
-            if (!LeafUtils.isLeaf(leafState)) continue;
+            // 指定した距離を超えたら、その先の探索を打ち切り
+            if (currentDist > maxLeafDistance) continue;
+
+            BlockState currentState = world.getBlockState(currentPos);
+            if (!LeafUtils.isLeaf(currentState)) continue;
 
             // 葉っぱを破壊
-            AutoCollector.breakAndCollect(world, leafPos, leafState, player, heldItem);
+            AutoCollector.breakAndCollect(world, currentPos, currentState, player, heldItem);
 
-            // 隣接する6方向（または26方向）の葉っぱをチェック
-            // バニラの葉っぱの維持範囲は最大7なので、それ以上遠くへは行かない
+            // 隣接する葉っぱを探索（距離を +1 する）
             for (int dx = -1; dx <= 1; dx++) {
                 for (int dy = -1; dy <= 1; dy++) {
                     for (int dz = -1; dz <= 1; dz++) {
                         if (dx == 0 && dy == 0 && dz == 0) continue;
 
-                        BlockPos nextPos = leafPos.add(dx, dy, dz);
-                        if (leavesVisited.contains(nextPos)) continue;
+                        BlockPos nextPos = currentPos.add(dx, dy, dz);
+                        if (visited.contains(nextPos)) continue;
 
                         BlockState nextState = world.getBlockState(nextPos);
 
-                        // 自然な葉っぱ（!persistent）のみを対象とする
-                        // distance属性をチェックすることで、その木に関連する葉っぱか判別できる
+                        // 自然な葉っぱ（!persistent）かつ、バニラの距離設定でも有効な範囲内か確認
                         if (LeafUtils.isLeaf(nextState) && !nextState.get(Properties.PERSISTENT)) {
-                            int distance = nextState.get(Properties.DISTANCE_1_7);
-                            // distance 7 は「原木から離れすぎて自然消滅する状態」
-                            // 1〜6 の範囲内であれば、この木の延長線上にある可能性が高い
-                            if (distance < 7) {
-                                leavesVisited.add(nextPos);
-                                leafQueue.add(nextPos);
+                            // バニラの distance も併用すると、より精度が上がります
+                            if (nextState.get(Properties.DISTANCE_1_7) < 7) {
+                                visited.add(nextPos);
+                                queue.add(new LeafNode(nextPos, currentDist + 1));
                             }
                         }
                     }

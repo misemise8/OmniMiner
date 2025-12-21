@@ -21,6 +21,21 @@ public class OmniMiner implements ModInitializer {
 		// 設定を読み込む
 		Config.load();
 
+		// コマンドを登録
+		net.misemise.command.OmniMinerCommand.register();
+
+		// 統合版プレイヤー向けプレビューシステムを登録
+		if (BedrockPlayerUtils.isFloodgateAvailable()) {
+			BedrockPreviewSystem.register();
+		}
+
+		// Floodgateの状態をログ出力
+		if (BedrockPlayerUtils.isFloodgateAvailable()) {
+			LOGGER.info("Floodgate detected - Bedrock Edition player support enabled!");
+		} else {
+			LOGGER.info("Floodgate not detected - Java Edition only mode");
+		}
+
 		// ※ クライアント側は ClientModInitializer で registerClient() を呼ぶ想定
 		try {
 			NetworkHandler.registerServer();
@@ -48,17 +63,65 @@ public class OmniMiner implements ModInitializer {
 			boolean isLog = isAxe && LogUtils.isLog(state);
 
 			if (isOre || isLog) {
-				// キーが押されているかチェック
-				boolean keyPressed = NetworkHandler.isKeyPressed(serverPlayer.getUuid());
+				// プレイヤーが統合版かどうかをチェック
+				boolean isBedrockPlayer = BedrockPlayerUtils.isBedrockPlayer(serverPlayer);
+				boolean shouldActivate = false;
 
-				if (!keyPressed) {
-					// キーが押されていない場合は通常処理
+				if (isBedrockPlayer) {
+					// 統合版プレイヤーの場合
+					if (Config.debugLog) {
+						LOGGER.info("Bedrock player detected: {}",
+								BedrockPlayerUtils.getPlayerPlatform(serverPlayer));
+					}
+
+					// スニーク（しゃがみ）状態をチェック
+					boolean isSneaking = serverPlayer.isSneaking();
+
+					// 統合版プレイヤーの有効化条件
+					if (Config.bedrockSneakEnable && isSneaking) {
+						shouldActivate = true;
+						if (Config.debugLog) {
+							LOGGER.info("Bedrock player sneaking - vein mining activated");
+						}
+					} else if (Config.bedrockAllowKeyBind &&
+							NetworkHandler.isKeyPressed(serverPlayer.getUuid())) {
+						// キーバインドも許可されている場合
+						shouldActivate = true;
+						if (Config.debugLog) {
+							LOGGER.info("Bedrock player using keybind - vein mining activated");
+						}
+					}
+
+					// 統合版プレイヤーにパーティクルでプレビュー表示（破壊時のみ）
+					// 注：しゃがみ中のプレビューは BedrockPreviewSystem が担当
+					if (shouldActivate && Config.bedrockShowParticles) {
+						try {
+							java.util.Set<net.minecraft.util.math.BlockPos> connectedBlocks =
+									findConnectedBlocks(serverWorld, pos, state);
+
+							if (Config.bedrockParticleMode == 1) {
+								BedrockVisualHelper.showDetailedParticleOutline(serverWorld, connectedBlocks, serverPlayer);
+							} else {
+								BedrockVisualHelper.showParticleOutline(serverWorld, connectedBlocks, serverPlayer);
+							}
+						} catch (Exception e) {
+							LOGGER.warn("Failed to show particle preview for Bedrock player", e);
+						}
+					}
+				} else {
+					// Java版プレイヤーの場合：通常のキー押下チェック
+					shouldActivate = NetworkHandler.isKeyPressed(serverPlayer.getUuid());
+				}
+
+				if (!shouldActivate) {
+					// 有効化条件を満たしていない場合は通常処理
 					return true;
 				}
 
 				String blockType = isOre ? "ore" : "log";
-				LOGGER.info("Vein mining {} triggered at {} by player {}",
-						blockType, pos, serverPlayer.getName().getString());
+				String playerType = isBedrockPlayer ? "Bedrock" : "Java";
+				LOGGER.info("Vein mining {} triggered at {} by {} player {}",
+						blockType, pos, playerType, serverPlayer.getName().getString());
 
 				// Mod側で一括破壊を実行
 				OreBreaker.breakConnectedOres(serverWorld, pos, state, serverPlayer, held);
@@ -70,5 +133,47 @@ public class OmniMiner implements ModInitializer {
 			// 通常通り処理
 			return true;
 		});
+	}
+
+	/**
+	 * 接続されたブロックを探す（プレビュー用）
+	 */
+	private static java.util.Set<net.minecraft.util.math.BlockPos> findConnectedBlocks(
+			ServerWorld world, net.minecraft.util.math.BlockPos startPos, net.minecraft.block.BlockState targetState) {
+		java.util.Set<net.minecraft.util.math.BlockPos> visited = new java.util.HashSet<>();
+		dfsPreview(world, startPos, targetState, visited);
+		return visited;
+	}
+
+	private static void dfsPreview(ServerWorld world, net.minecraft.util.math.BlockPos pos,
+								   net.minecraft.block.BlockState targetState, java.util.Set<net.minecraft.util.math.BlockPos> visited) {
+		if (visited.size() >= Config.maxBlocks || visited.contains(pos)) {
+			return;
+		}
+
+		net.minecraft.block.BlockState currentState = world.getBlockState(pos);
+		if (!currentState.isOf(targetState.getBlock())) {
+			return;
+		}
+
+		visited.add(pos);
+
+		if (Config.searchDiagonal) {
+			for (int dx = -1; dx <= 1; dx++) {
+				for (int dy = -1; dy <= 1; dy++) {
+					for (int dz = -1; dz <= 1; dz++) {
+						if (dx == 0 && dy == 0 && dz == 0) continue;
+						dfsPreview(world, pos.add(dx, dy, dz), targetState, visited);
+					}
+				}
+			}
+		} else {
+			net.minecraft.util.math.BlockPos[] neighbors = {
+					pos.up(), pos.down(), pos.north(), pos.south(), pos.east(), pos.west()
+			};
+			for (net.minecraft.util.math.BlockPos neighbor : neighbors) {
+				dfsPreview(world, neighbor, targetState, visited);
+			}
+		}
 	}
 }

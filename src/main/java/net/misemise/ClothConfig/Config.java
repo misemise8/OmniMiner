@@ -47,6 +47,20 @@ public class Config {
     // 葉っぱも一括破壊するか
     public static boolean breakLeaves = false;
 
+    // ========== 統合版（Bedrock Edition）関連の設定 ==========
+
+    // 統合版プレイヤーがスニークで一括破壊を有効化
+    public static boolean bedrockSneakEnable = true;
+
+    // 統合版プレイヤーも通常のキーバインドを使用可能にする（GeyserMCでキーバインドが使える場合）
+    public static boolean bedrockAllowKeyBind = false;
+
+    // 統合版プレイヤーにパーティクルで範囲を表示
+    public static boolean bedrockShowParticles = true;
+
+    // パーティクル表示モード (0: 角のみ, 1: 詳細な輪郭)
+    public static int bedrockParticleMode = 0;
+
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final File CONFIG_FILE = new File(
             FabricLoader.getInstance().getConfigDir().toFile(),
@@ -72,6 +86,10 @@ public class Config {
                     outlineThickness = data.outlineThickness;
                     toggleMode = data.toggleMode;
                     breakLeaves = data.breakLeaves;
+                    bedrockSneakEnable = data.bedrockSneakEnable;
+                    bedrockAllowKeyBind = data.bedrockAllowKeyBind;
+                    bedrockShowParticles = data.bedrockShowParticles;
+                    bedrockParticleMode = data.bedrockParticleMode;
                 }
                 OmniMiner.LOGGER.info("Config loaded from file");
             } catch (IOException e) {
@@ -99,6 +117,10 @@ public class Config {
             data.outlineThickness = outlineThickness;
             data.toggleMode = toggleMode;
             data.breakLeaves = breakLeaves;
+            data.bedrockSneakEnable = bedrockSneakEnable;
+            data.bedrockAllowKeyBind = bedrockAllowKeyBind;
+            data.bedrockShowParticles = bedrockShowParticles;
+            data.bedrockParticleMode = bedrockParticleMode;
 
             GSON.toJson(data, writer);
             OmniMiner.LOGGER.info("Config saved to file");
@@ -108,7 +130,7 @@ public class Config {
     }
 
     private static class ConfigData {
-        int maxBlocks = 64;
+        int maxBlocks = 512;
         boolean searchDiagonal = true;
         boolean autoCollect = true;
         boolean autoCollectExp = true;
@@ -119,5 +141,9 @@ public class Config {
         float outlineThickness = 2.0f;
         boolean toggleMode = false;
         boolean breakLeaves = false;
+        boolean bedrockSneakEnable = true;
+        boolean bedrockAllowKeyBind = false;
+        boolean bedrockShowParticles = true;
+        int bedrockParticleMode = 0;
     }
 }

@@ -5,9 +5,10 @@ import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
+import net.misemise.BedrockPlayerUtils;
 
 public class ConfigScreen {
-        private static String lastOpenedCategory = "config.omniminer.category.mining";
+        private static String lastOpenedCategory = "config.omniminer.category.mining"; // デフォルトは採掘設定
 
         public static Screen createConfigScreen(Screen parent) {
                 ConfigBuilder builder = ConfigBuilder.create()
@@ -23,13 +24,12 @@ public class ConfigScreen {
                 ConfigCategory mining = builder.getOrCreateCategory(
                         Text.translatable("config.omniminer.category.mining"));
 
-                // 最大ブロック数（IntFieldに変更）
-                mining.addEntry(entryBuilder.startIntField(
+                // 最大ブロック数
+                mining.addEntry(entryBuilder.startIntSlider(
                                 Text.translatable("config.omniminer.maxBlocks"),
-                                Config.maxBlocks)
+                                Config.maxBlocks,
+                                1, 512)
                         .setDefaultValue(64)
-                        .setMin(1)
-                        .setMax(512)
                         .setTooltip(Text.translatable("config.omniminer.maxBlocks.tooltip"))
                         .setSaveConsumer(value -> Config.maxBlocks = value)
                         .build());
@@ -106,6 +106,52 @@ public class ConfigScreen {
                         .setSaveConsumer(value -> Config.outlineThickness = value)
                         .build());
 
+                // ==================== 統合版設定カテゴリ ====================
+                // Floodgateが利用可能な場合のみ統合版設定を表示
+                if (BedrockPlayerUtils.isFloodgateAvailable()) {
+                        ConfigCategory bedrock = builder.getOrCreateCategory(
+                                Text.translatable("config.omniminer.category.bedrock"));
+
+                        // スニークで有効化
+                        bedrock.addEntry(entryBuilder.startBooleanToggle(
+                                        Text.translatable("config.omniminer.bedrockSneakEnable"),
+                                        Config.bedrockSneakEnable)
+                                .setDefaultValue(true)
+                                .setTooltip(Text.translatable("config.omniminer.bedrockSneakEnable.tooltip"))
+                                .setSaveConsumer(value -> Config.bedrockSneakEnable = value)
+                                .build());
+
+                        // キーバインドも許可
+                        bedrock.addEntry(entryBuilder.startBooleanToggle(
+                                        Text.translatable("config.omniminer.bedrockAllowKeyBind"),
+                                        Config.bedrockAllowKeyBind)
+                                .setDefaultValue(false)
+                                .setTooltip(Text.translatable("config.omniminer.bedrockAllowKeyBind.tooltip"))
+                                .setSaveConsumer(value -> Config.bedrockAllowKeyBind = value)
+                                .build());
+
+                        // パーティクル表示
+                        bedrock.addEntry(entryBuilder.startBooleanToggle(
+                                        Text.translatable("config.omniminer.bedrockShowParticles"),
+                                        Config.bedrockShowParticles)
+                                .setDefaultValue(true)
+                                .setTooltip(Text.translatable("config.omniminer.bedrockShowParticles.tooltip"))
+                                .setSaveConsumer(value -> Config.bedrockShowParticles = value)
+                                .build());
+
+                        // パーティクルモード
+                        bedrock.addEntry(entryBuilder.startSelector(
+                                        Text.translatable("config.omniminer.bedrockParticleMode"),
+                                        new String[] { "Corner", "Detailed" },
+                                        getParticleModeName(Config.bedrockParticleMode))
+                                .setDefaultValue("Corner")
+                                .setTooltip(Text.translatable("config.omniminer.bedrockParticleMode.tooltip"))
+                                .setSaveConsumer(value -> {
+                                        Config.bedrockParticleMode = getParticleModeIndex(value);
+                                })
+                                .build());
+                }
+
                 // ==================== その他設定カテゴリ ====================
                 ConfigCategory other = builder.getOrCreateCategory(
                         Text.translatable("config.omniminer.category.other"));
@@ -172,5 +218,13 @@ public class ConfigScreen {
                         default:
                                 return 0; // Cyan
                 }
+        }
+
+        private static String getParticleModeName(int index) {
+                return index == 1 ? "Detailed" : "Corner";
+        }
+
+        private static int getParticleModeIndex(String name) {
+                return name.equals("Detailed") ? 1 : 0;
         }
 }

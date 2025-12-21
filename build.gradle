@@ -7,7 +7,7 @@ version = project.mod_version
 group = project.maven_group
 
 base {
-	archivesName = project.archives_base_name
+	archivesName = "${project.archives_base_name}-${project.minecraft_version}-BE"
 }
 
 repositories {
@@ -19,6 +19,17 @@ repositories {
 	maven {
 		name = "Shedaniel"
 		url = "https://maven.shedaniel.me/"
+	}
+
+	// Floodgate API用のリポジトリ
+	maven {
+		name = "opencollab-releases"
+		url = "https://repo.opencollab.dev/maven-releases/"
+	}
+
+	maven {
+		name = "opencollab-snapshots"
+		url = "https://repo.opencollab.dev/maven-snapshots/"
 	}
 }
 
@@ -45,9 +56,8 @@ dependencies {
 	//ModMenu
 	modImplementation "com.terraformersmc:modmenu:17.0.0-alpha.1"
 
-	// Fabric Rendering API
-	//modImplementation include("net.fabricmc.fabric-api:fabric-rendering-v1:${fabric_version}")
-	
+	// Floodgate API (統合版プレイヤー検出用) - オプショナル
+	modCompileOnly "org.geysermc.floodgate:api:2.2.3-SNAPSHOT"
 }
 
 processResources {
