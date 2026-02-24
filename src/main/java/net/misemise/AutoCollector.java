@@ -24,7 +24,7 @@ public class AutoCollector {
      * 注：耐久値の消費はOreBreaker側で一括破壊の最初に1回だけ行う
      */
     public static void breakAndCollect(ServerWorld world, BlockPos pos, BlockState state,
-                                       ServerPlayerEntity player, ItemStack tool) {
+            ServerPlayerEntity player, ItemStack tool) {
         if (world == null || state == null || player == null) {
             return;
         }
@@ -37,12 +37,14 @@ public class AutoCollector {
 
             // ★★★ ツールの適正チェックを追加 ★★★
             // ツールが適正でない場合はドロップを出さない
-            boolean canHarvest = state.isToolRequired() ?
-                    (tool != null && tool.isSuitableFor(state)) : true;
+            boolean canHarvest = state.isToolRequired() ? (tool != null && tool.isSuitableFor(state)) : true;
 
             if (!canHarvest && Config.debugLog) {
                 LOGGER.info("Tool not suitable for block {} - no drops", state.getBlock());
             }
+
+            // BlockEntityをブロック破壊前に取得（破壊後はnullになるため）
+            net.minecraft.block.entity.BlockEntity blockEntity = world.getBlockEntity(pos);
 
             // ブロックを破壊（ドロップなし）
             world.breakBlock(pos, false, player);
@@ -51,7 +53,7 @@ public class AutoCollector {
             if (canHarvest) {
                 // アイテムドロップの処理
                 List<ItemStack> drops = Block.getDroppedStacks(state, world, pos,
-                        world.getBlockEntity(pos), player, tool);
+                        blockEntity, player, tool);
 
                 if (Config.autoCollect) {
                     // 自動回収：インベントリに直接追加
@@ -83,24 +85,16 @@ public class AutoCollector {
                     int expAmount = getExperienceFromOre(state);
                     if (expAmount > 0) {
                         if (Config.autoCollectExp) {
-                            // 自動回収：プレイヤーに直接経験値を付与
-                            player.addExperience(expAmount);
-
-                            // 経験値取得音を再生
-                            world.playSound(null, player.getBlockPos(),
-                                    net.minecraft.sound.SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP,
-                                    net.minecraft.sound.SoundCategory.PLAYERS,
-                                    0.1f, // 音量（0.1 = 小さめ）
-                                    (float)(0.5 + Math.random() * 0.5)); // ピッチ（0.5-1.0でランダム）
-
-                            if (Config.debugLog) {
-                                LOGGER.info("Auto-collected {} experience", expAmount);
-                            }
-                        } else {
-                            // 通常ドロップ：経験値オーブを生成
+                            // 足元にスポーン → 即座に拾得 → 修繕エンチャント(Mending)も正常に発動
                             ExperienceOrbEntity.spawn(world, player.getBlockPos().toCenterPos(), expAmount);
                             if (Config.debugLog) {
-                                LOGGER.info("Dropped {} experience as orb", expAmount);
+                                LOGGER.info("Auto-collected {} experience (orb at player pos)", expAmount);
+                            }
+                        } else {
+                            // ブロック位置にスポーン → その場に落とす
+                            ExperienceOrbEntity.spawn(world, pos.toCenterPos(), expAmount);
+                            if (Config.debugLog) {
+                                LOGGER.info("Dropped {} experience orb at block pos", expAmount);
                             }
                         }
                     }
@@ -122,31 +116,31 @@ public class AutoCollector {
 
         // ダイヤモンド鉱石: 3-7
         if (blockName.contains("diamond_ore")) {
-            return 3 + (int)(Math.random() * 5);
+            return 3 + (int) (Math.random() * 5);
         }
         // エメラルド鉱石: 3-7
         if (blockName.contains("emerald_ore")) {
-            return 3 + (int)(Math.random() * 5);
+            return 3 + (int) (Math.random() * 5);
         }
         // ラピスラズリ鉱石: 2-5
         if (blockName.contains("lapis_ore")) {
-            return 2 + (int)(Math.random() * 4);
+            return 2 + (int) (Math.random() * 4);
         }
         // レッドストーン鉱石: 1-5
         if (blockName.contains("redstone_ore")) {
-            return 1 + (int)(Math.random() * 5);
+            return 1 + (int) (Math.random() * 5);
         }
         // 石炭鉱石: 0-2
         if (blockName.contains("coal_ore")) {
-            return (int)(Math.random() * 3);
+            return (int) (Math.random() * 3);
         }
         // ネザークォーツ鉱石: 2-5
         if (blockName.contains("quartz_ore")) {
-            return 2 + (int)(Math.random() * 4);
+            return 2 + (int) (Math.random() * 4);
         }
         // ネザー金鉱石: 0-1
         if (blockName.contains("nether_gold_ore")) {
-            return (int)(Math.random() * 2);
+            return (int) (Math.random() * 2);
         }
 
         return 0;

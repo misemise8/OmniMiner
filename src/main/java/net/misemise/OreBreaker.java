@@ -27,8 +27,8 @@ public class OreBreaker {
      * 一括破壊全体で耐久値は1だけ消費
      */
     public static void breakConnectedOres(ServerWorld world, BlockPos startPos,
-                                          BlockState originalState, ServerPlayerEntity player,
-                                          ItemStack heldItem) {
+            BlockState originalState, ServerPlayerEntity player,
+            ItemStack heldItem) {
         // ★★★ 一括破壊の開始時に耐久値を1だけ消費 ★★★
         if (heldItem != null && !heldItem.isEmpty() && heldItem.isDamageable()) {
             heldItem.damage(1, player, net.minecraft.entity.EquipmentSlot.MAINHAND);
@@ -54,7 +54,7 @@ public class OreBreaker {
         boolean isLog = LogUtils.isLog(originalState);
 
         // 最初のブロックから開始（原木/鉱石のみ）
-        dfs(world, startPos, originalState, player, heldItem, visited, logPositions, isLog);
+        bfs(world, startPos, originalState, player, heldItem, visited, logPositions, isLog);
 
         // 原木を破壊した数（葉っぱを除く）
         int mainBlockCount = visited.size();
@@ -69,58 +69,70 @@ public class OreBreaker {
         NetworkHandler.sendBlocksMinedCount(player, mainBlockCount, blockType);
     }
 
-    private static void dfs(ServerWorld world, BlockPos pos, BlockState targetState,
-                            ServerPlayerEntity player, ItemStack heldItem, Set<BlockPos> visited,
-                            Set<BlockPos> logPositions, boolean isTreeMining) {
-        // 上限チェック
-        if (visited.size() >= Config.maxBlocks) {
-            return;
-        }
+    private static void bfs(ServerWorld world, BlockPos startPos, BlockState targetState,
+            ServerPlayerEntity player, ItemStack heldItem, Set<BlockPos> visited,
+            Set<BlockPos> logPositions, boolean isTreeMining) {
+        Queue<BlockPos> queue = new LinkedList<>();
+        queue.add(startPos);
 
-        // 既に訪問済み
-        if (visited.contains(pos)) {
-            return;
-        }
+        while (!queue.isEmpty()) {
+            // 上限チェック
+            if (visited.size() >= Config.maxBlocks) {
+                break;
+            }
 
-        BlockState currentState = world.getBlockState(pos);
+            BlockPos pos = queue.poll();
 
-        // 同じ種類のブロックのみ
-        if (!currentState.isOf(targetState.getBlock())) {
-            return;
-        }
+            // 既に訪問済みはスキップ
+            if (visited.contains(pos)) {
+                continue;
+            }
 
-        // 訪問済みにマーク
-        visited.add(pos);
+            BlockState currentState = world.getBlockState(pos);
 
-        // 原木の場合は位置を記録
-        if (isTreeMining && LogUtils.isLog(currentState)) {
-            logPositions.add(pos);
-        }
+            // 同じ種類のブロックのみ
+            if (!currentState.isOf(targetState.getBlock())) {
+                continue;
+            }
 
-        // ブロックを破壊してドロップを自動回収（耐久値は消費しない）
-        AutoCollector.breakAndCollect(world, pos, currentState, player, heldItem);
+            // 訪問済みにマーク
+            visited.add(pos);
 
-        // 隣接ブロックを再帰的に処理
-        if (Config.searchDiagonal) {
-            // 26方向探索（上下左右前後 + 斜め）
-            for (int dx = -1; dx <= 1; dx++) {
-                for (int dy = -1; dy <= 1; dy++) {
-                    for (int dz = -1; dz <= 1; dz++) {
-                        if (dx == 0 && dy == 0 && dz == 0) continue;
-                        BlockPos neighbor = pos.add(dx, dy, dz);
-                        dfs(world, neighbor, targetState, player, heldItem, visited, logPositions, isTreeMining);
+            // 原木の場合は位置を記録
+            if (isTreeMining && LogUtils.isLog(currentState)) {
+                logPositions.add(pos);
+            }
+
+            // ブロックを破壊してドロップを自動回収（耐久値は消費しない）
+            AutoCollector.breakAndCollect(world, pos, currentState, player, heldItem);
+
+            // 隣接ブロックをキューに追加
+            if (Config.searchDiagonal) {
+                // 26方向探索（上下左右前後 + 斜め）
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dy = -1; dy <= 1; dy++) {
+                        for (int dz = -1; dz <= 1; dz++) {
+                            if (dx == 0 && dy == 0 && dz == 0)
+                                continue;
+                            BlockPos neighbor = pos.add(dx, dy, dz);
+                            if (!visited.contains(neighbor)) {
+                                queue.add(neighbor);
+                            }
+                        }
                     }
                 }
-            }
-        } else {
-            // 6方向探索（上下左右前後のみ）
-            BlockPos[] neighbors = {
-                    pos.up(), pos.down(),
-                    pos.north(), pos.south(),
-                    pos.east(), pos.west()
-            };
-            for (BlockPos neighbor : neighbors) {
-                dfs(world, neighbor, targetState, player, heldItem, visited, logPositions, isTreeMining);
+            } else {
+                // 6方向探索（上下左右前後のみ）
+                BlockPos[] neighbors = {
+                        pos.up(), pos.down(),
+                        pos.north(), pos.south(),
+                        pos.east(), pos.west()
+                };
+                for (BlockPos neighbor : neighbors) {
+                    if (!visited.contains(neighbor)) {
+                        queue.add(neighbor);
+                    }
+                }
             }
         }
     }
@@ -139,7 +151,7 @@ public class OreBreaker {
      * 原木の周りの葉っぱを破壊（BFS方式で広範囲を探索）
      */
     private static void breakNearbyLeaves(ServerWorld world, Set<BlockPos> logPositions,
-                                          ServerPlayerEntity player, ItemStack heldItem) {
+            ServerPlayerEntity player, ItemStack heldItem) {
         Set<BlockPos> visited = new HashSet<>();
         Queue<LeafNode> queue = new LinkedList<>();
 
@@ -151,10 +163,12 @@ public class OreBreaker {
             for (int dx = -1; dx <= 1; dx++) {
                 for (int dy = -1; dy <= 1; dy++) {
                     for (int dz = -1; dz <= 1; dz++) {
-                        if (dx == 0 && dy == 0 && dz == 0) continue;
+                        if (dx == 0 && dy == 0 && dz == 0)
+                            continue;
 
                         BlockPos neighbor = logPos.add(dx, dy, dz);
-                        if (visited.contains(neighbor)) continue;
+                        if (visited.contains(neighbor))
+                            continue;
 
                         BlockState state = world.getBlockState(neighbor);
                         if (LeafUtils.isLeaf(state) && !state.get(Properties.PERSISTENT)) {
@@ -173,10 +187,12 @@ public class OreBreaker {
             int currentDist = current.distance;
 
             // 指定した距離を超えたら、その先の探索を打ち切り
-            if (currentDist > maxLeafDistance) continue;
+            if (currentDist > maxLeafDistance)
+                continue;
 
             BlockState currentState = world.getBlockState(currentPos);
-            if (!LeafUtils.isLeaf(currentState)) continue;
+            if (!LeafUtils.isLeaf(currentState))
+                continue;
 
             // 葉っぱを破壊（耐久値は消費しない）
             AutoCollector.breakAndCollect(world, currentPos, currentState, player, heldItem);
@@ -185,10 +201,12 @@ public class OreBreaker {
             for (int dx = -1; dx <= 1; dx++) {
                 for (int dy = -1; dy <= 1; dy++) {
                     for (int dz = -1; dz <= 1; dz++) {
-                        if (dx == 0 && dy == 0 && dz == 0) continue;
+                        if (dx == 0 && dy == 0 && dz == 0)
+                            continue;
 
                         BlockPos nextPos = currentPos.add(dx, dy, dz);
-                        if (visited.contains(nextPos)) continue;
+                        if (visited.contains(nextPos))
+                            continue;
 
                         BlockState nextState = world.getBlockState(nextPos);
 

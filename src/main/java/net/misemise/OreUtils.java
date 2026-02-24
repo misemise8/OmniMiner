@@ -6,6 +6,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.tag.TagKey;
 import net.minecraft.util.Identifier;
+import net.misemise.ClothConfig.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,8 +15,7 @@ public class OreUtils {
     private static final String MOD_ID = "omniminer";
 
     // カスタムタグ (data/omniminer/tags/blocks/ores.json)
-    public static final TagKey<Block> OREMINER_ORES =
-            TagKey.of(RegistryKeys.BLOCK, Identifier.of(MOD_ID, "ores"));
+    public static final TagKey<Block> OREMINER_ORES = TagKey.of(RegistryKeys.BLOCK, Identifier.of(MOD_ID, "ores"));
 
     /**
      * アイテムがつるはしかどうかを判定
@@ -73,17 +73,17 @@ public class OreUtils {
 
             // バニラとよくあるMODの鉱石パターン
             String[] orePatterns = {
-                    "ore",           // 基本的な鉱石
-                    "_ore",          // 末尾が_ore
-                    "ore_",          // ore_で始まる
-                    "debris",        // Ancient Debris
-                    "raw_",          // 粗鉱石ブロック
-                    "nether_",       // ネザー鉱石
-                    "deepslate_",    // 深層鉱石
-                    "end_ore",       // エンド鉱石（MOD）
-                    "dense_ore",     // 高密度鉱石（MOD）
-                    "poor_ore",      // 貧鉱石（MOD）
-                    "rich_ore",      // 富鉱石（MOD）
+                    "ore", // 基本的な鉱石
+                    "_ore", // 末尾が_ore
+                    "ore_", // ore_で始まる
+                    "debris", // Ancient Debris
+                    "raw_", // 粗鉱石ブロック
+                    "nether_", // ネザー鉱石
+                    "deepslate_", // 深層鉱石
+                    "end_ore", // エンド鉱石（MOD）
+                    "dense_ore", // 高密度鉱石（MOD）
+                    "poor_ore", // 貧鉱石（MOD）
+                    "rich_ore", // 富鉱石（MOD）
             };
 
             for (String pattern : orePatterns) {
@@ -122,6 +122,18 @@ public class OreUtils {
 
         } catch (Throwable e) {
             LOGGER.warn("Failed to check ore by name", e);
+        }
+
+        // カスタムブロックリストによる判定
+        try {
+            if (!Config.customBlocks.isEmpty()) {
+                String blockId = net.minecraft.registry.Registries.BLOCK.getId(state.getBlock()).toString();
+                if (Config.customBlocks.contains(blockId)) {
+                    return true;
+                }
+            }
+        } catch (Throwable e) {
+            LOGGER.warn("Failed to check custom block list", e);
         }
 
         return false;

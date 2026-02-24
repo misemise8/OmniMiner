@@ -17,6 +17,8 @@ import net.misemise.client.VeinMiningHud;
 import net.misemise.network.NetworkHandler;
 
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Set;
 
 /**
@@ -30,7 +32,8 @@ public class KeyStateTracker {
 
     public static void register() {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (client.player == null || client.world == null) return;
+            if (client.player == null || client.world == null)
+                return;
 
             // 一括採掘キーの状態を監視
             boolean currentKeyPressed = KeyBindings.isVeinMinerKeyPressed();
@@ -149,54 +152,70 @@ public class KeyStateTracker {
     /**
      * 接続された鉱石または原木を探す（サーバー側のOreBreaker.dfsと同じロジック）
      */
-    private static Set<BlockPos> findConnectedBlocks(MinecraftClient client, BlockPos startPos, BlockState targetState) {
+    private static Set<BlockPos> findConnectedBlocks(MinecraftClient client, BlockPos startPos,
+            BlockState targetState) {
         Set<BlockPos> visited = new HashSet<>();
-        dfs(client, startPos, targetState, visited);
+        bfs(client, startPos, targetState, visited);
         return visited;
     }
 
-    private static void dfs(MinecraftClient client, BlockPos pos, BlockState targetState, Set<BlockPos> visited) {
-        // 上限チェック
-        if (visited.size() >= Config.maxBlocks) {
-            return;
-        }
+    /**
+     * 接続された鉱石または原木を探す（サーバー側のOreBreaker.dfsと同じロジック）
+     */
+    private static void bfs(MinecraftClient client, BlockPos startPos, BlockState targetState, Set<BlockPos> visited) {
+        Queue<BlockPos> queue = new LinkedList<>();
+        queue.add(startPos);
 
-        // 既に訪問済み
-        if (visited.contains(pos)) {
-            return;
-        }
+        while (!queue.isEmpty()) {
+            // 上限チェック
+            if (visited.size() >= Config.maxBlocks) {
+                break;
+            }
 
-        BlockState currentState = client.world.getBlockState(pos);
+            BlockPos pos = queue.poll();
 
-        // 同じ種類のブロックかチェック
-        if (!currentState.isOf(targetState.getBlock())) {
-            return;
-        }
+            // 既に訪問済みはスキップ
+            if (visited.contains(pos)) {
+                continue;
+            }
 
-        // 訪問済みにマーク
-        visited.add(pos);
+            BlockState currentState = client.world.getBlockState(pos);
 
-        // 隣接ブロックを再帰的に処理
-        if (Config.searchDiagonal) {
-            // 26方向探索（上下左右前後 + 斜め）
-            for (int dx = -1; dx <= 1; dx++) {
-                for (int dy = -1; dy <= 1; dy++) {
-                    for (int dz = -1; dz <= 1; dz++) {
-                        if (dx == 0 && dy == 0 && dz == 0) continue;
-                        BlockPos neighbor = pos.add(dx, dy, dz);
-                        dfs(client, neighbor, targetState, visited);
+            // 同じ種類のブロックかチェック
+            if (!currentState.isOf(targetState.getBlock())) {
+                continue;
+            }
+
+            // 訪問済みにマーク
+            visited.add(pos);
+
+            // 隣接ブロックをキューに追加
+            if (Config.searchDiagonal) {
+                // 26方向探索（上下左右前後 + 斜め）
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dy = -1; dy <= 1; dy++) {
+                        for (int dz = -1; dz <= 1; dz++) {
+                            if (dx == 0 && dy == 0 && dz == 0)
+                                continue;
+                            BlockPos neighbor = pos.add(dx, dy, dz);
+                            if (!visited.contains(neighbor)) {
+                                queue.add(neighbor);
+                            }
+                        }
                     }
                 }
-            }
-        } else {
-            // 6方向探索（上下左右前後のみ）
-            BlockPos[] neighbors = {
-                    pos.up(), pos.down(),
-                    pos.north(), pos.south(),
-                    pos.east(), pos.west()
-            };
-            for (BlockPos neighbor : neighbors) {
-                dfs(client, neighbor, targetState, visited);
+            } else {
+                // 6方向探索（上下左右前後のみ）
+                BlockPos[] neighbors = {
+                        pos.up(), pos.down(),
+                        pos.north(), pos.south(),
+                        pos.east(), pos.west()
+                };
+                for (BlockPos neighbor : neighbors) {
+                    if (!visited.contains(neighbor)) {
+                        queue.add(neighbor);
+                    }
+                }
             }
         }
     }

@@ -9,6 +9,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * OreMiner設定クラス
@@ -61,11 +63,14 @@ public class Config {
     // パーティクル表示モード (0: 角のみ, 1: 詳細な輪郭)
     public static int bedrockParticleMode = 0;
 
+    // カスタムブロックリスト（ブロックIDを追加すると一括破壊対象になる）
+    // 例: ["minecraft:stone", "mymod:special_ore"]
+    public static List<String> customBlocks = new ArrayList<>();
+
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final File CONFIG_FILE = new File(
             FabricLoader.getInstance().getConfigDir().toFile(),
-            "omniminer.json"
-    );
+            "omniminer.json");
 
     /**
      * 設定を読み込む
@@ -90,6 +95,9 @@ public class Config {
                     bedrockAllowKeyBind = data.bedrockAllowKeyBind;
                     bedrockShowParticles = data.bedrockShowParticles;
                     bedrockParticleMode = data.bedrockParticleMode;
+                    if (data.customBlocks != null) {
+                        customBlocks = new ArrayList<>(data.customBlocks);
+                    }
                 }
                 OmniMiner.LOGGER.info("Config loaded from file");
             } catch (IOException e) {
@@ -121,6 +129,7 @@ public class Config {
             data.bedrockAllowKeyBind = bedrockAllowKeyBind;
             data.bedrockShowParticles = bedrockShowParticles;
             data.bedrockParticleMode = bedrockParticleMode;
+            data.customBlocks = new ArrayList<>(customBlocks);
 
             GSON.toJson(data, writer);
             OmniMiner.LOGGER.info("Config saved to file");
@@ -145,5 +154,6 @@ public class Config {
         boolean bedrockAllowKeyBind = false;
         boolean bedrockShowParticles = true;
         int bedrockParticleMode = 0;
+        List<String> customBlocks = new ArrayList<>();
     }
 }
