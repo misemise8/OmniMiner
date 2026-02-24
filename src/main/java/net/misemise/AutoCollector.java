@@ -35,66 +35,78 @@ public class AutoCollector {
                         pos, Config.autoCollect, Config.autoCollectExp);
             }
 
+            // ★★★ ツールの適正チェックを追加 ★★★
+            // ツールが適正でない場合はドロップを出さない
+            boolean canHarvest = state.isToolRequired() ?
+                    (tool != null && tool.isSuitableFor(state)) : true;
+
+            if (!canHarvest && Config.debugLog) {
+                LOGGER.info("Tool not suitable for block {} - no drops", state.getBlock());
+            }
+
             // ブロックを破壊（ドロップなし）
             world.breakBlock(pos, false, player);
 
-            // アイテムドロップの処理
-            List<ItemStack> drops = Block.getDroppedStacks(state, world, pos,
-                    world.getBlockEntity(pos), player, tool);
+            // ツールが適正な場合のみドロップを処理
+            if (canHarvest) {
+                // アイテムドロップの処理
+                List<ItemStack> drops = Block.getDroppedStacks(state, world, pos,
+                        world.getBlockEntity(pos), player, tool);
 
-            if (Config.autoCollect) {
-                // 自動回収：インベントリに直接追加
-                for (ItemStack drop : drops) {
-                    if (!drop.isEmpty()) {
-                        boolean inserted = player.getInventory().insertStack(drop);
-                        if (!inserted) {
+                if (Config.autoCollect) {
+                    // 自動回収：インベントリに直接追加
+                    for (ItemStack drop : drops) {
+                        if (!drop.isEmpty()) {
+                            boolean inserted = player.getInventory().insertStack(drop);
+                            if (!inserted) {
+                                Block.dropStack(world, pos, drop);
+                            }
+                        }
+                    }
+                    if (Config.debugLog) {
+                        LOGGER.info("Auto-collected {} items", drops.size());
+                    }
+                } else {
+                    // 通常ドロップ：地面に落とす
+                    for (ItemStack drop : drops) {
+                        if (!drop.isEmpty()) {
                             Block.dropStack(world, pos, drop);
                         }
                     }
-                }
-                if (Config.debugLog) {
-                    LOGGER.info("Auto-collected {} items", drops.size());
-                }
-            } else {
-                // 通常ドロップ：地面に落とす
-                for (ItemStack drop : drops) {
-                    if (!drop.isEmpty()) {
-                        Block.dropStack(world, pos, drop);
+                    if (Config.debugLog) {
+                        LOGGER.info("Dropped {} items normally", drops.size());
                     }
                 }
-                if (Config.debugLog) {
-                    LOGGER.info("Dropped {} items normally", drops.size());
-                }
-            }
 
-            // 経験値の処理（シルクタッチの場合は経験値を出さない）
-            if (!hasSilkTouch(tool)) {
-                int expAmount = getExperienceFromOre(state);
-                if (expAmount > 0) {
-                    if (Config.autoCollectExp) {
-                        // 自動回収：プレイヤーに直接経験値を付与
-                        player.addExperience(expAmount);
+                // 経験値の処理（シルクタッチの場合は経験値を出さない）
+                if (!hasSilkTouch(tool)) {
+                    int expAmount = getExperienceFromOre(state);
+                    if (expAmount > 0) {
+                        if (Config.autoCollectExp) {
+                            // 自動回収：プレイヤーに直接経験値を付与
+                            player.addExperience(expAmount);
 
-                        // 経験値取得音を再生
-                        world.playSound(null, player.getBlockPos(),
-                                net.minecraft.sound.SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP,
-                                net.minecraft.sound.SoundCategory.PLAYERS,
-                                0.1f, // 音量（0.1 = 小さめ）
-                                (float)(0.5 + Math.random() * 0.5)); // ピッチ（0.5-1.0でランダム）
+                            // 経験値取得音を再生
+                            world.playSound(null, player.getBlockPos(),
+                                    net.minecraft.sound.SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP,
+                                    net.minecraft.sound.SoundCategory.PLAYERS,
+                                    0.1f, // 音量（0.1 = 小さめ）
+                                    (float)(0.5 + Math.random() * 0.5)); // ピッチ（0.5-1.0でランダム）
 
-                        if (Config.debugLog) {
-                            LOGGER.info("Auto-collected {} experience", expAmount);
-                        }
-                    } else {
-                        // 通常ドロップ：経験値オーブを生成
-                        ExperienceOrbEntity.spawn(world, player.getBlockPos().toCenterPos(), expAmount);
-                        if (Config.debugLog) {
-                            LOGGER.info("Dropped {} experience as orb", expAmount);
+                            if (Config.debugLog) {
+                                LOGGER.info("Auto-collected {} experience", expAmount);
+                            }
+                        } else {
+                            // 通常ドロップ：経験値オーブを生成
+                            ExperienceOrbEntity.spawn(world, player.getBlockPos().toCenterPos(), expAmount);
+                            if (Config.debugLog) {
+                                LOGGER.info("Dropped {} experience as orb", expAmount);
+                            }
                         }
                     }
+                } else if (Config.debugLog) {
+                    LOGGER.info("Silk Touch detected - no experience dropped");
                 }
-            } else if (Config.debugLog) {
-                LOGGER.info("Silk Touch detected - no experience dropped");
             }
 
         } catch (Exception e) {
