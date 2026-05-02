@@ -14,6 +14,8 @@
   "config.omniminer.autoCollectExp.tooltip": "経験値オーブを自動で回収します。",
   "config.omniminer.breakLeaves": "葉も破壊",
   "config.omniminer.breakLeaves.tooltip": "木を一括破壊するとき、つながっている葉も一緒に破壊します。",
+  "config.omniminer.includeBlockEntities": "ブロックエンティティを含める",
+  "config.omniminer.includeBlockEntities.tooltip": "チェストなどのブロックエンティティを一括破壊対象に含めます。安全のため既定では無効です。",
   "config.omniminer.customBlocks": "カスタムブロック",
   "config.omniminer.customBlocks.tooltip": "一括採掘の対象として追加するブロック ID です。",
   "config.omniminer.toggleMode": "トグルモード",

@@ -3,27 +3,23 @@ package net.misemise.keybind;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.misemise.BlockTargetUtils;
 import net.misemise.ClothConfig.Config;
 import net.misemise.ClothConfig.ConfigScreen;
-import net.misemise.LogUtils;
 import net.misemise.OmniMiner;
-import net.misemise.OreUtils;
-import net.misemise.ToolUtils;
 import net.misemise.client.BlockHighlightRenderer;
 import net.misemise.client.VeinMiningHud;
 import net.misemise.network.NetworkHandler;
 
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Queue;
 import java.util.Set;
 
 public class KeyStateTracker {
     private static boolean lastKeyState = false;
-    private static BlockPos lastTargetPos = null;
+    private static String lastTargetKey = null;
     private static int lastBlockCount = 0;
     private static boolean toggledOn = false;
     private static boolean lastToggleMode = Config.toggleMode;
@@ -53,7 +49,7 @@ public class KeyStateTracker {
 
                 if (toggledOn) {
                     updateHighlight(client);
-                } else if (lastTargetPos != null) {
+                } else if (lastTargetKey != null) {
                     clearHighlight();
                 }
             } else {
@@ -65,7 +61,7 @@ public class KeyStateTracker {
 
                 if (currentKeyPressed) {
                     updateHighlight(client);
-                } else if (lastTargetPos != null) {
+                } else if (lastTargetKey != null) {
                     clearHighlight();
                 }
             }
@@ -80,7 +76,7 @@ public class KeyStateTracker {
 
     private static void updateHighlight(Minecraft client) {
         if (client.hitResult == null || client.hitResult.getType() != HitResult.Type.BLOCK) {
-            if (lastTargetPos != null) {
+            if (lastTargetKey != null) {
                 clearHighlight();
             }
             return;
@@ -89,26 +85,23 @@ public class KeyStateTracker {
         BlockHitResult blockHit = (BlockHitResult) client.hitResult;
         BlockPos targetPos = blockHit.getBlockPos();
         BlockState targetState = client.level.getBlockState(targetPos);
+        ItemStack heldItem = client.player.getMainHandItem();
 
-        boolean isPickaxe = ToolUtils.isPickaxe(client.player.getMainHandItem());
-        boolean isAxe = ToolUtils.isAxe(client.player.getMainHandItem());
-        boolean isOre = isPickaxe && OreUtils.isOre(targetState);
-        boolean isLog = isAxe && LogUtils.isLog(targetState);
-
-        if (!isOre && !isLog) {
-            if (lastTargetPos != null) {
+        if (!BlockTargetUtils.canVeinMine(client.level, targetPos, targetState, heldItem)) {
+            if (lastTargetKey != null) {
                 clearHighlight();
             }
             return;
         }
 
-        if (targetPos.equals(lastTargetPos)) {
+        String targetKey = BlockTargetUtils.previewCacheKey(targetPos, targetState, heldItem);
+        if (targetKey.equals(lastTargetKey)) {
             return;
         }
 
-        lastTargetPos = targetPos;
+        lastTargetKey = targetKey;
 
-        Set<BlockPos> connectedBlocks = findConnectedBlocks(client, targetPos, targetState);
+        Set<BlockPos> connectedBlocks = findConnectedBlocks(client, targetPos, targetState, heldItem);
         BlockHighlightRenderer.setHighlightedBlocks(connectedBlocks);
 
         lastBlockCount = connectedBlocks.size();
@@ -119,65 +112,16 @@ public class KeyStateTracker {
         }
     }
 
-    private static Set<BlockPos> findConnectedBlocks(Minecraft client, BlockPos startPos, BlockState targetState) {
-        Set<BlockPos> visited = new HashSet<>();
-        bfs(client, startPos, targetState, visited);
-        return visited;
-    }
-
-    private static void bfs(Minecraft client, BlockPos startPos, BlockState targetState, Set<BlockPos> visited) {
-        Queue<BlockPos> queue = new LinkedList<>();
-        queue.add(startPos);
-
-        while (!queue.isEmpty()) {
-            if (visited.size() >= Config.maxBlocks) {
-                break;
-            }
-
-            BlockPos pos = queue.poll();
-            if (visited.contains(pos)) {
-                continue;
-            }
-
-            BlockState currentState = client.level.getBlockState(pos);
-            if (!currentState.is(targetState.getBlock())) {
-                continue;
-            }
-
-            visited.add(pos);
-
-            if (Config.searchDiagonal) {
-                for (int dx = -1; dx <= 1; dx++) {
-                    for (int dy = -1; dy <= 1; dy++) {
-                        for (int dz = -1; dz <= 1; dz++) {
-                            if (dx == 0 && dy == 0 && dz == 0) {
-                                continue;
-                            }
-                            addUnchecked(queue, visited, pos.offset(dx, dy, dz));
-                        }
-                    }
-                }
-            } else {
-                addUnchecked(queue, visited, pos.above());
-                addUnchecked(queue, visited, pos.below());
-                addUnchecked(queue, visited, pos.north());
-                addUnchecked(queue, visited, pos.south());
-                addUnchecked(queue, visited, pos.east());
-                addUnchecked(queue, visited, pos.west());
-            }
-        }
-    }
-
-    private static void addUnchecked(Queue<BlockPos> queue, Set<BlockPos> visited, BlockPos pos) {
-        if (!visited.contains(pos)) {
-            queue.add(pos);
-        }
+    private static Set<BlockPos> findConnectedBlocks(Minecraft client, BlockPos startPos, BlockState targetState,
+            ItemStack heldItem) {
+        return BlockTargetUtils.findSphericalTargets(
+                client.level, startPos, targetState, heldItem, Config.maxBlocks, Config.searchDiagonal);
     }
 
     private static void clearHighlight() {
         BlockHighlightRenderer.clearHighlights();
         VeinMiningHud.clearPreview();
-        lastTargetPos = null;
+        lastTargetKey = null;
         lastBlockCount = 0;
     }
 }

@@ -45,6 +45,10 @@ public class OmniMinerCommand {
                                         .then(Commands.argument("value", BoolArgumentType.bool())
                                                 .executes(ctx -> setBreakLeaves(ctx,
                                                         BoolArgumentType.getBool(ctx, "value")))))
+                                .then(Commands.literal("includeBlockEntities")
+                                        .then(Commands.argument("value", BoolArgumentType.bool())
+                                                .executes(ctx -> setIncludeBlockEntities(ctx,
+                                                        BoolArgumentType.getBool(ctx, "value")))))
                                 .then(Commands.literal("toggleMode")
                                         .then(Commands.argument("value", BoolArgumentType.bool())
                                                 .executes(ctx -> setToggleMode(ctx,
@@ -96,6 +100,7 @@ public class OmniMinerCommand {
         source.sendSuccess(() -> Component.literal("Auto Collect: " + Config.autoCollect), false);
         source.sendSuccess(() -> Component.literal("Auto Collect Exp: " + Config.autoCollectExp), false);
         source.sendSuccess(() -> Component.literal("Break Leaves: " + Config.breakLeaves), false);
+        source.sendSuccess(() -> Component.literal("Include Block Entities: " + Config.includeBlockEntities), false);
         source.sendSuccess(() -> Component.literal("Toggle Mode: " + Config.toggleMode), false);
 
         if (BedrockPlayerUtils.isFloodgateAvailable()) {
@@ -120,6 +125,7 @@ public class OmniMinerCommand {
         source.sendSuccess(() -> Component.literal("/omniminer set autoCollect <true|false>"), false);
         source.sendSuccess(() -> Component.literal("/omniminer set autoCollectExp <true|false>"), false);
         source.sendSuccess(() -> Component.literal("/omniminer set breakLeaves <true|false>"), false);
+        source.sendSuccess(() -> Component.literal("/omniminer set includeBlockEntities <true|false>"), false);
         source.sendSuccess(() -> Component.literal("/omniminer set toggleMode <true|false>"), false);
         source.sendSuccess(() -> Component.literal("/omniminer addBlock <blockId> - Add a custom block"), false);
         source.sendSuccess(() -> Component.literal("/omniminer removeBlock <blockId> - Remove a custom block"), false);
@@ -174,6 +180,13 @@ public class OmniMinerCommand {
         Config.toggleMode = value;
         Config.save();
         ctx.getSource().sendSuccess(() -> Component.literal("Toggle Mode set to: " + value), false);
+        return 1;
+    }
+
+    private static int setIncludeBlockEntities(CommandContext<CommandSourceStack> ctx, boolean value) {
+        Config.includeBlockEntities = value;
+        Config.save();
+        ctx.getSource().sendSuccess(() -> Component.literal("Include Block Entities set to: " + value), false);
         return 1;
     }
 

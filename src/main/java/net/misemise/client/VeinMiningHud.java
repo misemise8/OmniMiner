@@ -56,9 +56,14 @@ public class VeinMiningHud {
             return;
         }
 
-        String message = "log".equals(blockType)
-                ? blocksMinedCount + " logs chopped!"
-                : blocksMinedCount + " ores mined!";
+        String message;
+        if ("log".equals(blockType)) {
+            message = blocksMinedCount + " logs chopped!";
+        } else if ("ore".equals(blockType)) {
+            message = blocksMinedCount + " ores mined!";
+        } else {
+            message = blocksMinedCount + " blocks mined!";
+        }
         drawMessage(graphics, client.font, message);
     }
 

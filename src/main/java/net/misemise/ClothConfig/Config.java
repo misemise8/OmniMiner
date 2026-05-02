@@ -24,6 +24,7 @@ public class Config {
     public static float outlineThickness = 2.0f;
     public static boolean toggleMode = false;
     public static boolean breakLeaves = false;
+    public static boolean includeBlockEntities = false;
     public static boolean bedrockSneakEnable = true;
     public static boolean bedrockAllowKeyBind = false;
     public static boolean bedrockShowParticles = true;
@@ -68,6 +69,7 @@ public class Config {
             data.outlineThickness = outlineThickness;
             data.toggleMode = toggleMode;
             data.breakLeaves = breakLeaves;
+            data.includeBlockEntities = includeBlockEntities;
             data.bedrockSneakEnable = bedrockSneakEnable;
             data.bedrockAllowKeyBind = bedrockAllowKeyBind;
             data.bedrockShowParticles = bedrockShowParticles;
@@ -93,6 +95,7 @@ public class Config {
         outlineThickness = data.outlineThickness;
         toggleMode = data.toggleMode;
         breakLeaves = data.breakLeaves;
+        includeBlockEntities = data.includeBlockEntities;
         bedrockSneakEnable = data.bedrockSneakEnable;
         bedrockAllowKeyBind = data.bedrockAllowKeyBind;
         bedrockShowParticles = data.bedrockShowParticles;
@@ -130,6 +133,7 @@ public class Config {
         float outlineThickness = 2.0f;
         boolean toggleMode = false;
         boolean breakLeaves = false;
+        boolean includeBlockEntities = false;
         boolean bedrockSneakEnable = true;
         boolean bedrockAllowKeyBind = false;
         boolean bedrockShowParticles = true;

@@ -37,7 +37,7 @@ public class AutoCollector {
 
             // ★★★ ツールの適正チェックを追加 ★★★
             // ツールが適正でない場合はドロップを出さない
-            boolean canHarvest = state.requiresCorrectToolForDrops() ? (tool != null && tool.isCorrectToolForDrops(state)) : true;
+            boolean canHarvest = BlockTargetUtils.canHarvestDrops(state, tool);
 
             if (!canHarvest && Config.debugLog) {
                 LOGGER.info("Tool not suitable for block {} - no drops", state.getBlock());
@@ -47,7 +47,7 @@ public class AutoCollector {
             net.minecraft.world.level.block.entity.BlockEntity blockEntity = world.getBlockEntity(pos);
 
             // ブロックを破壊（ドロップなし）
-            world.destroyBlock(pos, false, player);
+            world.removeBlock(pos, false);
 
             // ツールが適正な場合のみドロップを処理
             if (canHarvest) {
