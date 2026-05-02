@@ -1,12 +1,12 @@
 package net.misemise;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.ExperienceOrbEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.misemise.ClothConfig.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,8 +23,8 @@ public class AutoCollector {
      * ブロックを破壊し、ドロップアイテムと経験値を処理
      * 注：耐久値の消費はOreBreaker側で一括破壊の最初に1回だけ行う
      */
-    public static void breakAndCollect(ServerWorld world, BlockPos pos, BlockState state,
-            ServerPlayerEntity player, ItemStack tool) {
+    public static void breakAndCollect(ServerLevel world, BlockPos pos, BlockState state,
+            ServerPlayer player, ItemStack tool) {
         if (world == null || state == null || player == null) {
             return;
         }
@@ -37,31 +37,31 @@ public class AutoCollector {
 
             // ★★★ ツールの適正チェックを追加 ★★★
             // ツールが適正でない場合はドロップを出さない
-            boolean canHarvest = state.isToolRequired() ? (tool != null && tool.isSuitableFor(state)) : true;
+            boolean canHarvest = state.requiresCorrectToolForDrops() ? (tool != null && tool.isCorrectToolForDrops(state)) : true;
 
             if (!canHarvest && Config.debugLog) {
                 LOGGER.info("Tool not suitable for block {} - no drops", state.getBlock());
             }
 
             // BlockEntityをブロック破壊前に取得（破壊後はnullになるため）
-            net.minecraft.block.entity.BlockEntity blockEntity = world.getBlockEntity(pos);
+            net.minecraft.world.level.block.entity.BlockEntity blockEntity = world.getBlockEntity(pos);
 
             // ブロックを破壊（ドロップなし）
-            world.breakBlock(pos, false, player);
+            world.destroyBlock(pos, false, player);
 
             // ツールが適正な場合のみドロップを処理
             if (canHarvest) {
                 // アイテムドロップの処理
-                List<ItemStack> drops = Block.getDroppedStacks(state, world, pos,
+                List<ItemStack> drops = Block.getDrops(state, world, pos,
                         blockEntity, player, tool);
 
                 if (Config.autoCollect) {
                     // 自動回収：インベントリに直接追加
                     for (ItemStack drop : drops) {
                         if (!drop.isEmpty()) {
-                            boolean inserted = player.getInventory().insertStack(drop);
+                            boolean inserted = player.getInventory().add(drop);
                             if (!inserted) {
-                                Block.dropStack(world, pos, drop);
+                                Block.popResource(world, pos, drop);
                             }
                         }
                     }
@@ -72,7 +72,7 @@ public class AutoCollector {
                     // 通常ドロップ：地面に落とす
                     for (ItemStack drop : drops) {
                         if (!drop.isEmpty()) {
-                            Block.dropStack(world, pos, drop);
+                            Block.popResource(world, pos, drop);
                         }
                     }
                     if (Config.debugLog) {
@@ -86,13 +86,13 @@ public class AutoCollector {
                     if (expAmount > 0) {
                         if (Config.autoCollectExp) {
                             // 足元にスポーン → 即座に拾得 → 修繕エンチャント(Mending)も正常に発動
-                            ExperienceOrbEntity.spawn(world, player.getBlockPos().toCenterPos(), expAmount);
+                            ExperienceOrb.award(world, player.blockPosition().getCenter(), expAmount);
                             if (Config.debugLog) {
                                 LOGGER.info("Auto-collected {} experience (orb at player pos)", expAmount);
                             }
                         } else {
                             // ブロック位置にスポーン → その場に落とす
-                            ExperienceOrbEntity.spawn(world, pos.toCenterPos(), expAmount);
+                            ExperienceOrb.award(world, pos.getCenter(), expAmount);
                             if (Config.debugLog) {
                                 LOGGER.info("Dropped {} experience orb at block pos", expAmount);
                             }
@@ -155,11 +155,11 @@ public class AutoCollector {
         }
 
         try {
-            return tool.hasEnchantments() &&
-                    tool.getEnchantments().getEnchantments().stream()
+            return tool.isEnchanted() &&
+                    tool.getEnchantments().keySet().stream()
                             .anyMatch(entry -> {
                                 String desc = entry.value().description().getString().toLowerCase();
-                                String id = entry.getIdAsString();
+                                String id = entry.getRegisteredName();
                                 return desc.contains("silk touch") || id.contains("silk_touch");
                             });
         } catch (Throwable e) {

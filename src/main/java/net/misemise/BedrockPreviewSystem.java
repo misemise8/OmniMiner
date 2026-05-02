@@ -1,12 +1,12 @@
 package net.misemise;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.minecraft.block.BlockState;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.misemise.ClothConfig.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,8 +30,8 @@ public class BedrockPreviewSystem {
                 return;
             }
 
-            for (ServerWorld world : server.getWorlds()) {
-                for (ServerPlayerEntity player : world.getPlayers()) {
+            for (ServerLevel world : server.getAllLevels()) {
+                for (ServerPlayer player : world.players()) {
                     updatePreview(player, world);
                 }
             }
@@ -40,8 +40,8 @@ public class BedrockPreviewSystem {
         OmniMiner.LOGGER.info("BedrockPreviewSystem registered");
     }
 
-    private static void updatePreview(ServerPlayerEntity player, ServerWorld world) {
-        UUID playerId = player.getUuid();
+    private static void updatePreview(ServerPlayer player, ServerLevel world) {
+        UUID playerId = player.getUUID();
 
         // 統合版プレイヤーかチェック
         if (!BedrockPlayerUtils.isBedrockPlayer(player)) {
@@ -56,13 +56,13 @@ public class BedrockPreviewSystem {
         }
 
         // しゃがんでいるかチェック
-        if (!player.isSneaking()) {
+        if (!player.isShiftKeyDown()) {
             previewCache.remove(playerId);
             return;
         }
 
         // プレイヤーが見ているブロックを取得
-        HitResult hitResult = player.raycast(5.0, 0.0f, false);
+        HitResult hitResult = player.pick(5.0, 0.0f, false);
         if (hitResult.getType() != HitResult.Type.BLOCK) {
             previewCache.remove(playerId);
             return;
@@ -73,8 +73,8 @@ public class BedrockPreviewSystem {
         BlockState targetState = world.getBlockState(targetPos);
 
         // ツールチェック
-        boolean isPickaxe = ToolUtils.isPickaxe(player.getMainHandStack());
-        boolean isAxe = ToolUtils.isAxe(player.getMainHandStack());
+        boolean isPickaxe = ToolUtils.isPickaxe(player.getMainHandItem());
+        boolean isAxe = ToolUtils.isAxe(player.getMainHandItem());
         boolean isOre = isPickaxe && OreUtils.isOre(targetState);
         boolean isLog = isAxe && LogUtils.isLog(targetState);
 
@@ -105,7 +105,7 @@ public class BedrockPreviewSystem {
         }
     }
 
-    private static void showPreviewParticles(ServerWorld world, Set<BlockPos> blocks, ServerPlayerEntity player) {
+    private static void showPreviewParticles(ServerLevel world, Set<BlockPos> blocks, ServerPlayer player) {
         if (Config.bedrockParticleMode == 1) {
             BedrockVisualHelper.showDetailedParticleOutline(world, blocks, player);
         } else {
@@ -113,13 +113,13 @@ public class BedrockPreviewSystem {
         }
     }
 
-    private static Set<BlockPos> findConnectedBlocks(ServerWorld world, BlockPos startPos, BlockState targetState) {
+    private static Set<BlockPos> findConnectedBlocks(ServerLevel world, BlockPos startPos, BlockState targetState) {
         Set<BlockPos> visited = new HashSet<>();
         dfs(world, startPos, targetState, visited);
         return visited;
     }
 
-    private static void dfs(ServerWorld world, BlockPos pos, BlockState targetState, Set<BlockPos> visited) {
+    private static void dfs(ServerLevel world, BlockPos pos, BlockState targetState, Set<BlockPos> visited) {
         if (visited.size() >= Config.maxBlocks || visited.contains(pos)) {
             return;
         }
@@ -135,7 +135,7 @@ public class BedrockPreviewSystem {
         if (isTargetLog && Config.breakLeaves) {
             shouldInclude = isCurrentLog || isCurrentLeaf;
         } else {
-            shouldInclude = currentState.isOf(targetState.getBlock());
+            shouldInclude = currentState.is(targetState.getBlock());
         }
 
         if (!shouldInclude) {
@@ -149,13 +149,13 @@ public class BedrockPreviewSystem {
                 for (int dy = -1; dy <= 1; dy++) {
                     for (int dz = -1; dz <= 1; dz++) {
                         if (dx == 0 && dy == 0 && dz == 0) continue;
-                        dfs(world, pos.add(dx, dy, dz), targetState, visited);
+                        dfs(world, pos.offset(dx, dy, dz), targetState, visited);
                     }
                 }
             }
         } else {
             BlockPos[] neighbors = {
-                    pos.up(), pos.down(), pos.north(), pos.south(), pos.east(), pos.west()
+                    pos.above(), pos.below(), pos.north(), pos.south(), pos.east(), pos.west()
             };
             for (BlockPos neighbor : neighbors) {
                 dfs(world, neighbor, targetState, visited);

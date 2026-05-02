@@ -1,11 +1,11 @@
 package net.misemise;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.misemise.ClothConfig.Config;
 import net.misemise.network.NetworkHandler;
 import org.slf4j.Logger;
@@ -26,16 +26,16 @@ public class OreBreaker {
      * 指定位置から同じ種類のブロックを探して一括破壊
      * 一括破壊全体で耐久値は1だけ消費
      */
-    public static void breakConnectedOres(ServerWorld world, BlockPos startPos,
-            BlockState originalState, ServerPlayerEntity player,
+    public static void breakConnectedOres(ServerLevel world, BlockPos startPos,
+            BlockState originalState, ServerPlayer player,
             ItemStack heldItem) {
         // ★★★ 一括破壊の開始時に耐久値を1だけ消費 ★★★
-        if (heldItem != null && !heldItem.isEmpty() && heldItem.isDamageable()) {
-            heldItem.damage(1, player, net.minecraft.entity.EquipmentSlot.MAINHAND);
+        if (heldItem != null && !heldItem.isEmpty() && heldItem.isDamageableItem()) {
+            heldItem.hurtAndBreak(1, player, net.minecraft.world.entity.EquipmentSlot.MAINHAND);
 
             if (Config.debugLog) {
                 LOGGER.info("Consumed 1 durability for vein mining: {}/{}",
-                        heldItem.getMaxDamage() - heldItem.getDamage(), heldItem.getMaxDamage());
+                        heldItem.getMaxDamage() - heldItem.getDamageValue(), heldItem.getMaxDamage());
             }
 
             // ツールが壊れたかチェック
@@ -69,8 +69,8 @@ public class OreBreaker {
         NetworkHandler.sendBlocksMinedCount(player, mainBlockCount, blockType);
     }
 
-    private static void bfs(ServerWorld world, BlockPos startPos, BlockState targetState,
-            ServerPlayerEntity player, ItemStack heldItem, Set<BlockPos> visited,
+    private static void bfs(ServerLevel world, BlockPos startPos, BlockState targetState,
+            ServerPlayer player, ItemStack heldItem, Set<BlockPos> visited,
             Set<BlockPos> logPositions, boolean isTreeMining) {
         Queue<BlockPos> queue = new LinkedList<>();
         queue.add(startPos);
@@ -91,7 +91,7 @@ public class OreBreaker {
             BlockState currentState = world.getBlockState(pos);
 
             // 同じ種類のブロックのみ
-            if (!currentState.isOf(targetState.getBlock())) {
+            if (!currentState.is(targetState.getBlock())) {
                 continue;
             }
 
@@ -114,7 +114,7 @@ public class OreBreaker {
                         for (int dz = -1; dz <= 1; dz++) {
                             if (dx == 0 && dy == 0 && dz == 0)
                                 continue;
-                            BlockPos neighbor = pos.add(dx, dy, dz);
+                            BlockPos neighbor = pos.offset(dx, dy, dz);
                             if (!visited.contains(neighbor)) {
                                 queue.add(neighbor);
                             }
@@ -124,7 +124,7 @@ public class OreBreaker {
             } else {
                 // 6方向探索（上下左右前後のみ）
                 BlockPos[] neighbors = {
-                        pos.up(), pos.down(),
+                        pos.above(), pos.below(),
                         pos.north(), pos.south(),
                         pos.east(), pos.west()
                 };
@@ -150,8 +150,8 @@ public class OreBreaker {
     /**
      * 原木の周りの葉っぱを破壊（BFS方式で広範囲を探索）
      */
-    private static void breakNearbyLeaves(ServerWorld world, Set<BlockPos> logPositions,
-            ServerPlayerEntity player, ItemStack heldItem) {
+    private static void breakNearbyLeaves(ServerLevel world, Set<BlockPos> logPositions,
+            ServerPlayer player, ItemStack heldItem) {
         Set<BlockPos> visited = new HashSet<>();
         Queue<LeafNode> queue = new LinkedList<>();
 
@@ -166,12 +166,12 @@ public class OreBreaker {
                         if (dx == 0 && dy == 0 && dz == 0)
                             continue;
 
-                        BlockPos neighbor = logPos.add(dx, dy, dz);
+                        BlockPos neighbor = logPos.offset(dx, dy, dz);
                         if (visited.contains(neighbor))
                             continue;
 
                         BlockState state = world.getBlockState(neighbor);
-                        if (LeafUtils.isLeaf(state) && !state.get(Properties.PERSISTENT)) {
+                        if (LeafUtils.isLeaf(state) && !state.getValue(BlockStateProperties.PERSISTENT)) {
                             visited.add(neighbor);
                             queue.add(new LeafNode(neighbor, 1));
                         }
@@ -204,16 +204,16 @@ public class OreBreaker {
                         if (dx == 0 && dy == 0 && dz == 0)
                             continue;
 
-                        BlockPos nextPos = currentPos.add(dx, dy, dz);
+                        BlockPos nextPos = currentPos.offset(dx, dy, dz);
                         if (visited.contains(nextPos))
                             continue;
 
                         BlockState nextState = world.getBlockState(nextPos);
 
                         // 自然な葉っぱ（!persistent）かつ、バニラの距離設定でも有効な範囲内か確認
-                        if (LeafUtils.isLeaf(nextState) && !nextState.get(Properties.PERSISTENT)) {
+                        if (LeafUtils.isLeaf(nextState) && !nextState.getValue(BlockStateProperties.PERSISTENT)) {
                             // バニラの distance も併用すると、より精度が上がります
-                            if (nextState.get(Properties.DISTANCE_1_7) < 7) {
+                            if (nextState.getValue(BlockStateProperties.DISTANCE) < 7) {
                                 visited.add(nextPos);
                                 queue.add(new LeafNode(nextPos, currentDist + 1));
                             }

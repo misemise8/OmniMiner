@@ -1,10 +1,10 @@
 package net.misemise;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +14,7 @@ public class LeafUtils {
 
     // カスタムタグ (data/omniminer/tags/blocks/leaves.json)
     public static final TagKey<Block> OREMINER_LEAVES =
-            TagKey.of(RegistryKeys.BLOCK, Identifier.of(MOD_ID, "leaves"));
+            TagKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath(MOD_ID, "leaves"));
 
     /**
      * ブロックが葉っぱかどうかを判定
@@ -26,7 +26,7 @@ public class LeafUtils {
 
         try {
             // 1. カスタムタグで判定
-            if (state.isIn(OREMINER_LEAVES)) {
+            if (state.is(OREMINER_LEAVES)) {
                 return true;
             }
         } catch (Throwable e) {
@@ -35,8 +35,8 @@ public class LeafUtils {
 
         try {
             // 2. Minecraftの標準タグで判定
-            TagKey<Block> leavesTag = TagKey.of(RegistryKeys.BLOCK, Identifier.of("minecraft", "leaves"));
-            if (state.isIn(leavesTag)) {
+            TagKey<Block> leavesTag = TagKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath("minecraft", "leaves"));
+            if (state.is(leavesTag)) {
                 return true;
             }
         } catch (Throwable e) {

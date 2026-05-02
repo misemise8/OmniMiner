@@ -1,9 +1,9 @@
 package net.misemise.keybind;
 
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.util.Identifier;
+import com.mojang.blaze3d.platform.InputConstants;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.resources.Identifier;
 import net.misemise.OmniMiner;
 import org.lwjgl.glfw.GLFW;
 
@@ -11,26 +11,26 @@ import org.lwjgl.glfw.GLFW;
  * キーバインド管理クラス
  */
 public class KeyBindings {
-    public static KeyBinding veinMinerKey;
-    public static KeyBinding openConfigKey;
+    public static KeyMapping veinMinerKey;
+    public static KeyMapping openConfigKey;
 
-    public static final KeyBinding.Category OREMINER_CATEGORY = KeyBinding.Category.create(
-            Identifier.of("omniminer", "general")
+    public static final KeyMapping.Category OREMINER_CATEGORY = KeyMapping.Category.register(
+            Identifier.fromNamespaceAndPath("omniminer", "general")
     );
 
     public static void register() {
         // 一括採掘キー (V) - ゲームプレイカテゴリー
-        veinMinerKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+        veinMinerKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.omniminer.veinminer",
-                InputUtil.Type.KEYSYM,
+                InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_V,
                 OREMINER_CATEGORY
         ));
 
         // 設定画面を開くキー (O) - その他カテゴリー
-        openConfigKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+        openConfigKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.omniminer.openconfig",
-                InputUtil.Type.KEYSYM,
+                InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_O,
                 OREMINER_CATEGORY
         ));
@@ -39,10 +39,10 @@ public class KeyBindings {
     }
 
     public static boolean isVeinMinerKeyPressed() {
-        return veinMinerKey != null && veinMinerKey.isPressed();
+        return veinMinerKey != null && veinMinerKey.isDown();
     }
 
     public static boolean wasOpenConfigPressed() {
-        return openConfigKey != null && openConfigKey.wasPressed();
+        return openConfigKey != null && openConfigKey.consumeClick();
     }
 }

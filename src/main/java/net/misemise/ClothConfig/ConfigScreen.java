@@ -3,8 +3,8 @@ package net.misemise.ClothConfig;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 import net.misemise.BedrockPlayerUtils;
 
 public class ConfigScreen {
@@ -13,7 +13,7 @@ public class ConfigScreen {
         public static Screen createConfigScreen(Screen parent) {
                 ConfigBuilder builder = ConfigBuilder.create()
                                 .setParentScreen(parent)
-                                .setTitle(Text.translatable("config.omniminer.title"))
+                                .setTitle(Component.translatable("config.omniminer.title"))
                                 .setSavingRunnable(() -> {
                                         Config.save();
                                 });
@@ -22,69 +22,69 @@ public class ConfigScreen {
 
                 // ==================== 採掘設定カテゴリ ====================
                 ConfigCategory mining = builder.getOrCreateCategory(
-                                Text.translatable("config.omniminer.category.mining"));
+                                Component.translatable("config.omniminer.category.mining"));
 
                 // 最大ブロック数
                 mining.addEntry(entryBuilder.startIntSlider(
-                                Text.translatable("config.omniminer.maxBlocks"),
+                                Component.translatable("config.omniminer.maxBlocks"),
                                 Config.maxBlocks,
                                 1, 512)
                                 .setDefaultValue(64)
-                                .setTooltip(Text.translatable("config.omniminer.maxBlocks.tooltip"))
+                                .setTooltip(Component.translatable("config.omniminer.maxBlocks.tooltip"))
                                 .setSaveConsumer(value -> Config.maxBlocks = value)
                                 .build());
 
                 // 斜め探索
                 mining.addEntry(entryBuilder.startBooleanToggle(
-                                Text.translatable("config.omniminer.searchDiagonal"),
+                                Component.translatable("config.omniminer.searchDiagonal"),
                                 Config.searchDiagonal)
                                 .setDefaultValue(true)
-                                .setTooltip(Text.translatable("config.omniminer.searchDiagonal.tooltip"))
+                                .setTooltip(Component.translatable("config.omniminer.searchDiagonal.tooltip"))
                                 .setSaveConsumer(value -> Config.searchDiagonal = value)
                                 .build());
 
                 // 自動回収
                 mining.addEntry(entryBuilder.startBooleanToggle(
-                                Text.translatable("config.omniminer.autoCollect"),
+                                Component.translatable("config.omniminer.autoCollect"),
                                 Config.autoCollect)
                                 .setDefaultValue(true)
-                                .setTooltip(Text.translatable("config.omniminer.autoCollect.tooltip"))
+                                .setTooltip(Component.translatable("config.omniminer.autoCollect.tooltip"))
                                 .setSaveConsumer(value -> Config.autoCollect = value)
                                 .build());
 
                 // 経験値自動回収
                 mining.addEntry(entryBuilder.startBooleanToggle(
-                                Text.translatable("config.omniminer.autoCollectExp"),
+                                Component.translatable("config.omniminer.autoCollectExp"),
                                 Config.autoCollectExp)
                                 .setDefaultValue(true)
-                                .setTooltip(Text.translatable("config.omniminer.autoCollectExp.tooltip"))
+                                .setTooltip(Component.translatable("config.omniminer.autoCollectExp.tooltip"))
                                 .setSaveConsumer(value -> Config.autoCollectExp = value)
                                 .build());
 
                 // 葉っぱも破壊
                 mining.addEntry(entryBuilder.startBooleanToggle(
-                                Text.translatable("config.omniminer.breakLeaves"),
+                                Component.translatable("config.omniminer.breakLeaves"),
                                 Config.breakLeaves)
                                 .setDefaultValue(false)
-                                .setTooltip(Text.translatable("config.omniminer.breakLeaves.tooltip"))
+                                .setTooltip(Component.translatable("config.omniminer.breakLeaves.tooltip"))
                                 .setSaveConsumer(value -> Config.breakLeaves = value)
                                 .build());
 
                 // トグルモード
                 mining.addEntry(entryBuilder.startBooleanToggle(
-                                Text.translatable("config.omniminer.toggleMode"),
+                                Component.translatable("config.omniminer.toggleMode"),
                                 Config.toggleMode)
                                 .setDefaultValue(false)
-                                .setTooltip(Text.translatable("config.omniminer.toggleMode.tooltip"))
+                                .setTooltip(Component.translatable("config.omniminer.toggleMode.tooltip"))
                                 .setSaveConsumer(value -> Config.toggleMode = value)
                                 .build());
 
                 // カスタムブロックリスト
                 mining.addEntry(entryBuilder.startStrList(
-                                Text.translatable("config.omniminer.customBlocks"),
+                                Component.translatable("config.omniminer.customBlocks"),
                                 Config.customBlocks)
                                 .setDefaultValue(java.util.Collections.emptyList())
-                                .setTooltip(Text.translatable("config.omniminer.customBlocks.tooltip"))
+                                .setTooltip(Component.translatable("config.omniminer.customBlocks.tooltip"))
                                 .setSaveConsumer(value -> {
                                         Config.customBlocks = new java.util.ArrayList<>(value);
                                         Config.save();
@@ -93,15 +93,15 @@ public class ConfigScreen {
 
                 // ==================== アウトライン設定カテゴリ ====================
                 ConfigCategory outline = builder.getOrCreateCategory(
-                                Text.translatable("config.omniminer.category.outline"));
+                                Component.translatable("config.omniminer.category.outline"));
 
                 // アウトラインの色
                 outline.addEntry(entryBuilder.startSelector(
-                                Text.translatable("config.omniminer.outlineColor"),
+                                Component.translatable("config.omniminer.outlineColor"),
                                 new String[] { "Cyan", "Red", "Yellow", "Green", "Purple", "White" },
                                 getColorName(Config.outlineColor))
                                 .setDefaultValue("Cyan")
-                                .setTooltip(Text.translatable("config.omniminer.outlineColor.tooltip"))
+                                .setTooltip(Component.translatable("config.omniminer.outlineColor.tooltip"))
                                 .setSaveConsumer(value -> {
                                         Config.outlineColor = getColorIndex(value);
                                 })
@@ -109,12 +109,12 @@ public class ConfigScreen {
 
                 // アウトラインの太さ
                 outline.addEntry(entryBuilder.startFloatField(
-                                Text.translatable("config.omniminer.outlineThickness"),
+                                Component.translatable("config.omniminer.outlineThickness"),
                                 Config.outlineThickness)
                                 .setDefaultValue(2.0f)
                                 .setMin(1.0f)
                                 .setMax(5.0f)
-                                .setTooltip(Text.translatable("config.omniminer.outlineThickness.tooltip"))
+                                .setTooltip(Component.translatable("config.omniminer.outlineThickness.tooltip"))
                                 .setSaveConsumer(value -> Config.outlineThickness = value)
                                 .build());
 
@@ -122,42 +122,42 @@ public class ConfigScreen {
                 // Floodgateが利用可能な場合のみ統合版設定を表示
                 if (BedrockPlayerUtils.isFloodgateAvailable()) {
                         ConfigCategory bedrock = builder.getOrCreateCategory(
-                                        Text.translatable("config.omniminer.category.bedrock"));
+                                        Component.translatable("config.omniminer.category.bedrock"));
 
                         // スニークで有効化
                         bedrock.addEntry(entryBuilder.startBooleanToggle(
-                                        Text.translatable("config.omniminer.bedrockSneakEnable"),
+                                        Component.translatable("config.omniminer.bedrockSneakEnable"),
                                         Config.bedrockSneakEnable)
                                         .setDefaultValue(true)
-                                        .setTooltip(Text.translatable("config.omniminer.bedrockSneakEnable.tooltip"))
+                                        .setTooltip(Component.translatable("config.omniminer.bedrockSneakEnable.tooltip"))
                                         .setSaveConsumer(value -> Config.bedrockSneakEnable = value)
                                         .build());
 
                         // キーバインドも許可
                         bedrock.addEntry(entryBuilder.startBooleanToggle(
-                                        Text.translatable("config.omniminer.bedrockAllowKeyBind"),
+                                        Component.translatable("config.omniminer.bedrockAllowKeyBind"),
                                         Config.bedrockAllowKeyBind)
                                         .setDefaultValue(false)
-                                        .setTooltip(Text.translatable("config.omniminer.bedrockAllowKeyBind.tooltip"))
+                                        .setTooltip(Component.translatable("config.omniminer.bedrockAllowKeyBind.tooltip"))
                                         .setSaveConsumer(value -> Config.bedrockAllowKeyBind = value)
                                         .build());
 
                         // パーティクル表示
                         bedrock.addEntry(entryBuilder.startBooleanToggle(
-                                        Text.translatable("config.omniminer.bedrockShowParticles"),
+                                        Component.translatable("config.omniminer.bedrockShowParticles"),
                                         Config.bedrockShowParticles)
                                         .setDefaultValue(true)
-                                        .setTooltip(Text.translatable("config.omniminer.bedrockShowParticles.tooltip"))
+                                        .setTooltip(Component.translatable("config.omniminer.bedrockShowParticles.tooltip"))
                                         .setSaveConsumer(value -> Config.bedrockShowParticles = value)
                                         .build());
 
                         // パーティクルモード
                         bedrock.addEntry(entryBuilder.startSelector(
-                                        Text.translatable("config.omniminer.bedrockParticleMode"),
+                                        Component.translatable("config.omniminer.bedrockParticleMode"),
                                         new String[] { "Corner", "Detailed" },
                                         getParticleModeName(Config.bedrockParticleMode))
                                         .setDefaultValue("Corner")
-                                        .setTooltip(Text.translatable("config.omniminer.bedrockParticleMode.tooltip"))
+                                        .setTooltip(Component.translatable("config.omniminer.bedrockParticleMode.tooltip"))
                                         .setSaveConsumer(value -> {
                                                 Config.bedrockParticleMode = getParticleModeIndex(value);
                                         })
@@ -166,32 +166,32 @@ public class ConfigScreen {
 
                 // ==================== その他設定カテゴリ ====================
                 ConfigCategory other = builder.getOrCreateCategory(
-                                Text.translatable("config.omniminer.category.other"));
+                                Component.translatable("config.omniminer.category.other"));
 
                 // 破壊後のブロック数表示
                 other.addEntry(entryBuilder.startBooleanToggle(
-                                Text.translatable("config.omniminer.showBlocksMinedCount"),
+                                Component.translatable("config.omniminer.showBlocksMinedCount"),
                                 Config.showBlocksMinedCount)
                                 .setDefaultValue(true)
-                                .setTooltip(Text.translatable("config.omniminer.showBlocksMinedCount.tooltip"))
+                                .setTooltip(Component.translatable("config.omniminer.showBlocksMinedCount.tooltip"))
                                 .setSaveConsumer(value -> Config.showBlocksMinedCount = value)
                                 .build());
 
                 // 破壊前のブロック数プレビュー
                 other.addEntry(entryBuilder.startBooleanToggle(
-                                Text.translatable("config.omniminer.showBlocksPreview"),
+                                Component.translatable("config.omniminer.showBlocksPreview"),
                                 Config.showBlocksPreview)
                                 .setDefaultValue(true)
-                                .setTooltip(Text.translatable("config.omniminer.showBlocksPreview.tooltip"))
+                                .setTooltip(Component.translatable("config.omniminer.showBlocksPreview.tooltip"))
                                 .setSaveConsumer(value -> Config.showBlocksPreview = value)
                                 .build());
 
                 // デバッグログ
                 other.addEntry(entryBuilder.startBooleanToggle(
-                                Text.translatable("config.omniminer.debugLog"),
+                                Component.translatable("config.omniminer.debugLog"),
                                 Config.debugLog)
                                 .setDefaultValue(false)
-                                .setTooltip(Text.translatable("config.omniminer.debugLog.tooltip"))
+                                .setTooltip(Component.translatable("config.omniminer.debugLog.tooltip"))
                                 .setSaveConsumer(value -> Config.debugLog = value)
                                 .build());
 

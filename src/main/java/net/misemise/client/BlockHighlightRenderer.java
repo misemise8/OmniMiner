@@ -1,21 +1,23 @@
 package net.misemise.client;
 
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.RenderLayers;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 import net.misemise.OmniMiner;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
-
 import java.util.*;
 
 public class BlockHighlightRenderer {
     private static final Set<BlockPos> highlightedBlocks = new HashSet<>();
 
     public static void register() {
+        LevelRenderEvents.END_MAIN.register(BlockHighlightRenderer::render);
         OmniMiner.LOGGER.info("BlockHighlightRenderer initialized");
     }
 
@@ -54,7 +56,7 @@ public class BlockHighlightRenderer {
         }
     }
 
-    public static void render(VertexConsumerProvider.Immediate immediate, Camera camera, Matrix4f positionMatrix) {
+    public static void render(LevelRenderContext context) {
         Set<BlockPos> blocksCopy;
         synchronized (highlightedBlocks) {
             if (highlightedBlocks.isEmpty())
@@ -62,12 +64,17 @@ public class BlockHighlightRenderer {
             blocksCopy = new HashSet<>(highlightedBlocks);
         }
 
+        PoseStack matrices = context.poseStack();
+        matrices.pushPose();
+
         try {
             GL11.glDisable(GL11.GL_DEPTH_TEST);
             GL11.glDepthMask(false);
 
-            // Use RenderLayers.lines() for 1.21.11 (moved from RenderLayer.getLines())
-            VertexConsumer vc = immediate.getBuffer(RenderLayers.lines());
+            MultiBufferSource.BufferSource immediate = context.bufferSource();
+
+            // Use the shared line render type for the outline buffer.
+            VertexConsumer vc = immediate.getBuffer(RenderTypes.lines());
 
             // 色を取得
             float[] color = getColor();
@@ -76,10 +83,9 @@ public class BlockHighlightRenderer {
             int bi = (int) (color[2] * 255);
             int ai = (int) (color[3] * 255);
 
-            // Use Camera.getCameraPos() for 1.21.11 (renamed from Camera.getPos())
-            Vec3d cameraPos = camera.getCameraPos();
-            Matrix4f mat = new Matrix4f(positionMatrix);
-            mat.translate(-(float) cameraPos.x, -(float) cameraPos.y, -(float) cameraPos.z);
+            Vec3 cameraPos = context.levelState().cameraRenderState.pos;
+            matrices.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
+            Matrix4f mat = new Matrix4f(matrices.last().pose());
 
             Set<Edge> edges = new HashSet<>();
 
@@ -92,8 +98,8 @@ public class BlockHighlightRenderer {
                 float x1 = x0 + 1, y1 = y0 + 1, z1 = z0 + 1;
 
                 // すべての隣接ブロックをチェック
-                boolean down = blocksCopy.contains(p.down());
-                boolean up = blocksCopy.contains(p.up());
+                boolean down = blocksCopy.contains(p.below());
+                boolean up = blocksCopy.contains(p.above());
                 boolean north = blocksCopy.contains(p.north());
                 boolean south = blocksCopy.contains(p.south());
                 boolean west = blocksCopy.contains(p.west());
@@ -138,49 +144,49 @@ public class BlockHighlightRenderer {
                 float layerOffset = layer * baseOffset;
 
                 for (Edge e : edges) {
-                    // 元の線 (1.21.11: must include lineWidth attribute)
-                    vc.vertex(mat, e.x1, e.y1, e.z1).color(ri, gi, bi, ai).texture(0f, 0f).overlay(0).light(0xF000F0)
-                            .lineWidth(1.0f).normal(0f, 1f, 0f);
-                    vc.vertex(mat, e.x2, e.y2, e.z2).color(ri, gi, bi, ai).texture(0f, 0f).overlay(0).light(0xF000F0)
-                            .lineWidth(1.0f).normal(0f, 1f, 0f);
+                    // 元の線
+                    vc.addVertex(mat, e.x1, e.y1, e.z1).setColor(ri, gi, bi, ai).setUv(0f, 0f).setOverlay(0).setLight(0xF000F0)
+                            .setLineWidth(1.0f).setNormal(0f, 1f, 0f);
+                    vc.addVertex(mat, e.x2, e.y2, e.z2).setColor(ri, gi, bi, ai).setUv(0f, 0f).setOverlay(0).setLight(0xF000F0)
+                            .setLineWidth(1.0f).setNormal(0f, 1f, 0f);
 
                     if (layer > 0) {
                         // オフセット付きの線を6方向に描画
-                        vc.vertex(mat, e.x1 + layerOffset, e.y1, e.z1).color(ri, gi, bi, ai).texture(0f, 0f).overlay(0)
-                                .light(0xF000F0).lineWidth(1.0f).normal(0f, 1f, 0f);
-                        vc.vertex(mat, e.x2 + layerOffset, e.y2, e.z2).color(ri, gi, bi, ai).texture(0f, 0f).overlay(0)
-                                .light(0xF000F0).lineWidth(1.0f).normal(0f, 1f, 0f);
+                        vc.addVertex(mat, e.x1 + layerOffset, e.y1, e.z1).setColor(ri, gi, bi, ai).setUv(0f, 0f).setOverlay(0)
+                                .setLight(0xF000F0).setLineWidth(1.0f).setNormal(0f, 1f, 0f);
+                        vc.addVertex(mat, e.x2 + layerOffset, e.y2, e.z2).setColor(ri, gi, bi, ai).setUv(0f, 0f).setOverlay(0)
+                                .setLight(0xF000F0).setLineWidth(1.0f).setNormal(0f, 1f, 0f);
 
-                        vc.vertex(mat, e.x1 - layerOffset, e.y1, e.z1).color(ri, gi, bi, ai).texture(0f, 0f).overlay(0)
-                                .light(0xF000F0).lineWidth(1.0f).normal(0f, 1f, 0f);
-                        vc.vertex(mat, e.x2 - layerOffset, e.y2, e.z2).color(ri, gi, bi, ai).texture(0f, 0f).overlay(0)
-                                .light(0xF000F0).lineWidth(1.0f).normal(0f, 1f, 0f);
+                        vc.addVertex(mat, e.x1 - layerOffset, e.y1, e.z1).setColor(ri, gi, bi, ai).setUv(0f, 0f).setOverlay(0)
+                                .setLight(0xF000F0).setLineWidth(1.0f).setNormal(0f, 1f, 0f);
+                        vc.addVertex(mat, e.x2 - layerOffset, e.y2, e.z2).setColor(ri, gi, bi, ai).setUv(0f, 0f).setOverlay(0)
+                                .setLight(0xF000F0).setLineWidth(1.0f).setNormal(0f, 1f, 0f);
 
-                        vc.vertex(mat, e.x1, e.y1 + layerOffset, e.z1).color(ri, gi, bi, ai).texture(0f, 0f).overlay(0)
-                                .light(0xF000F0).lineWidth(1.0f).normal(0f, 1f, 0f);
-                        vc.vertex(mat, e.x2, e.y2 + layerOffset, e.z2).color(ri, gi, bi, ai).texture(0f, 0f).overlay(0)
-                                .light(0xF000F0).lineWidth(1.0f).normal(0f, 1f, 0f);
+                        vc.addVertex(mat, e.x1, e.y1 + layerOffset, e.z1).setColor(ri, gi, bi, ai).setUv(0f, 0f).setOverlay(0)
+                                .setLight(0xF000F0).setLineWidth(1.0f).setNormal(0f, 1f, 0f);
+                        vc.addVertex(mat, e.x2, e.y2 + layerOffset, e.z2).setColor(ri, gi, bi, ai).setUv(0f, 0f).setOverlay(0)
+                                .setLight(0xF000F0).setLineWidth(1.0f).setNormal(0f, 1f, 0f);
 
-                        vc.vertex(mat, e.x1, e.y1 - layerOffset, e.z1).color(ri, gi, bi, ai).texture(0f, 0f).overlay(0)
-                                .light(0xF000F0).lineWidth(1.0f).normal(0f, 1f, 0f);
-                        vc.vertex(mat, e.x2, e.y2 - layerOffset, e.z2).color(ri, gi, bi, ai).texture(0f, 0f).overlay(0)
-                                .light(0xF000F0).lineWidth(1.0f).normal(0f, 1f, 0f);
+                        vc.addVertex(mat, e.x1, e.y1 - layerOffset, e.z1).setColor(ri, gi, bi, ai).setUv(0f, 0f).setOverlay(0)
+                                .setLight(0xF000F0).setLineWidth(1.0f).setNormal(0f, 1f, 0f);
+                        vc.addVertex(mat, e.x2, e.y2 - layerOffset, e.z2).setColor(ri, gi, bi, ai).setUv(0f, 0f).setOverlay(0)
+                                .setLight(0xF000F0).setLineWidth(1.0f).setNormal(0f, 1f, 0f);
 
-                        vc.vertex(mat, e.x1, e.y1, e.z1 + layerOffset).color(ri, gi, bi, ai).texture(0f, 0f).overlay(0)
-                                .light(0xF000F0).lineWidth(1.0f).normal(0f, 1f, 0f);
-                        vc.vertex(mat, e.x2, e.y2, e.z2 + layerOffset).color(ri, gi, bi, ai).texture(0f, 0f).overlay(0)
-                                .light(0xF000F0).lineWidth(1.0f).normal(0f, 1f, 0f);
+                        vc.addVertex(mat, e.x1, e.y1, e.z1 + layerOffset).setColor(ri, gi, bi, ai).setUv(0f, 0f).setOverlay(0)
+                                .setLight(0xF000F0).setLineWidth(1.0f).setNormal(0f, 1f, 0f);
+                        vc.addVertex(mat, e.x2, e.y2, e.z2 + layerOffset).setColor(ri, gi, bi, ai).setUv(0f, 0f).setOverlay(0)
+                                .setLight(0xF000F0).setLineWidth(1.0f).setNormal(0f, 1f, 0f);
 
-                        vc.vertex(mat, e.x1, e.y1, e.z1 - layerOffset).color(ri, gi, bi, ai).texture(0f, 0f).overlay(0)
-                                .light(0xF000F0).lineWidth(1.0f).normal(0f, 1f, 0f);
-                        vc.vertex(mat, e.x2, e.y2, e.z2 - layerOffset).color(ri, gi, bi, ai).texture(0f, 0f).overlay(0)
-                                .light(0xF000F0).lineWidth(1.0f).normal(0f, 1f, 0f);
+                        vc.addVertex(mat, e.x1, e.y1, e.z1 - layerOffset).setColor(ri, gi, bi, ai).setUv(0f, 0f).setOverlay(0)
+                                .setLight(0xF000F0).setLineWidth(1.0f).setNormal(0f, 1f, 0f);
+                        vc.addVertex(mat, e.x2, e.y2, e.z2 - layerOffset).setColor(ri, gi, bi, ai).setUv(0f, 0f).setOverlay(0)
+                                .setLight(0xF000F0).setLineWidth(1.0f).setNormal(0f, 1f, 0f);
                     }
                 }
             }
 
-            // Draw the lines with the correct RenderLayer for 1.21.11
-            immediate.draw(RenderLayers.lines());
+            // Flush the line buffer.
+            immediate.endBatch(RenderTypes.lines());
 
             GL11.glDepthMask(true);
             GL11.glEnable(GL11.GL_DEPTH_TEST);
@@ -191,6 +197,8 @@ public class BlockHighlightRenderer {
                 GL11.glEnable(GL11.GL_DEPTH_TEST);
             } catch (Throwable ignored) {
             }
+        } finally {
+            matrices.popPose();
         }
     }
 

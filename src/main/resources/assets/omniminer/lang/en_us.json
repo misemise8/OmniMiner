@@ -14,6 +14,8 @@
   "config.omniminer.autoCollectExp.tooltip": "Automatically collect experience orbs",
   "config.omniminer.breakLeaves": "Break Leaves",
   "config.omniminer.breakLeaves.tooltip": "Also break connected leaves when chopping trees",
+  "config.omniminer.customBlocks": "Custom Blocks",
+  "config.omniminer.customBlocks.tooltip": "Additional block IDs that should be treated as vein mining targets",
   "config.omniminer.toggleMode": "Toggle Mode",
   "config.omniminer.toggleMode.tooltip": "Press key to toggle on/off (instead of holding)",
   "config.omniminer.debugLog": "Debug Log",
@@ -35,7 +37,7 @@
   "config.omniminer.bedrockParticleMode": "Particle Mode",
   "config.omniminer.bedrockParticleMode.tooltip": "Corner: Show particles at block corners only (lighter). Detailed: Show full outline (more particles)",
 
-  "key.omniminer.veinminer": "Vein Miner (Hold)",
+  "key.omniminer.veinminer": "Vein Miner",
   "key.omniminer.openconfig": "Open OmniMiner Config",
 
   "key.category.omniminer.general": "OmniMiner"

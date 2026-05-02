@@ -1,10 +1,10 @@
 package net.misemise;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +14,7 @@ public class LogUtils {
 
     // カスタムタグ (data/omniminer/tags/blocks/logs.json)
     public static final TagKey<Block> OREMINER_LOGS =
-            TagKey.of(RegistryKeys.BLOCK, Identifier.of(MOD_ID, "logs"));
+            TagKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath(MOD_ID, "logs"));
 
     /**
      * ブロックが原木（ログ）かどうかを判定
@@ -26,7 +26,7 @@ public class LogUtils {
 
         try {
             // 1. カスタムタグで判定
-            if (state.isIn(OREMINER_LOGS)) {
+            if (state.is(OREMINER_LOGS)) {
                 return true;
             }
         } catch (Throwable e) {
@@ -35,8 +35,8 @@ public class LogUtils {
 
         try {
             // 2. Minecraftの標準タグで判定
-            TagKey<Block> logsTag = TagKey.of(RegistryKeys.BLOCK, Identifier.of("minecraft", "logs"));
-            if (state.isIn(logsTag)) {
+            TagKey<Block> logsTag = TagKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath("minecraft", "logs"));
+            if (state.is(logsTag)) {
                 return true;
             }
         } catch (Throwable e) {
