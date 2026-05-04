@@ -14,6 +14,8 @@
   "config.omniminer.autoCollectExp.tooltip": "Automatically collect experience orbs",
   "config.omniminer.breakLeaves": "Break Leaves",
   "config.omniminer.breakLeaves.tooltip": "Also break connected leaves when chopping trees",
+  "config.omniminer.includeBlockEntities": "Include Block Entities",
+  "config.omniminer.includeBlockEntities.tooltip": "Allow vein mining blocks with block entities, such as chests. Disabled by default for safety.",
   "config.omniminer.toggleMode": "Toggle Mode",
   "config.omniminer.toggleMode.tooltip": "Press key to toggle on/off (instead of holding)",
   "config.omniminer.debugLog": "Debug Log",

@@ -53,8 +53,10 @@ public class VeinMiningHud {
             String messageStr;
             if ("log".equals(blockType)) {
                 messageStr = blocksMinedCount + " logs chopped!";
-            } else {
+            } else if ("ore".equals(blockType)) {
                 messageStr = blocksMinedCount + " ores mined!";
+            } else {
+                messageStr = blocksMinedCount + " blocks mined!";
             }
 
             Text message = Text.literal(messageStr);

@@ -70,6 +70,15 @@ public class ConfigScreen {
                                 .setSaveConsumer(value -> Config.breakLeaves = value)
                                 .build());
 
+                // ブロックエンティティを含める
+                mining.addEntry(entryBuilder.startBooleanToggle(
+                                Text.translatable("config.omniminer.includeBlockEntities"),
+                                Config.includeBlockEntities)
+                                .setDefaultValue(false)
+                                .setTooltip(Text.translatable("config.omniminer.includeBlockEntities.tooltip"))
+                                .setSaveConsumer(value -> Config.includeBlockEntities = value)
+                                .build());
+
                 // トグルモード
                 mining.addEntry(entryBuilder.startBooleanToggle(
                                 Text.translatable("config.omniminer.toggleMode"),

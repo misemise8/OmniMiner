@@ -32,13 +32,13 @@
 		"omniminer.mixins.json"
 	],
 	"depends": {
-		"fabricloader": ">=0.18.1",
+		"fabricloader": ">=0.18.2",
 		"minecraft": "~1.21.11",
 		"java": ">=21",
-		"fabric-api": "*"
+		"fabric-api": "*",
+		"cloth-config": ">=21.11.151"
 	},
 	"suggests": {
-		"another-mod": "*",
-		"cloth-config": ">=15.0.0"
+		"modmenu": ">=17.0.0-alpha.1"
 	}
 }

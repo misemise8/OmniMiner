@@ -35,9 +35,7 @@ public class AutoCollector {
                         pos, Config.autoCollect, Config.autoCollectExp);
             }
 
-            // ★★★ ツールの適正チェックを追加 ★★★
-            // ツールが適正でない場合はドロップを出さない
-            boolean canHarvest = state.isToolRequired() ? (tool != null && tool.isSuitableFor(state)) : true;
+            boolean canHarvest = BlockTargetUtils.canHarvestDrops(state, tool);
 
             if (!canHarvest && Config.debugLog) {
                 LOGGER.info("Tool not suitable for block {} - no drops", state.getBlock());
