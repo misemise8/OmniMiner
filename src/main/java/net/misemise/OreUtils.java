@@ -14,7 +14,7 @@ public class OreUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger("omniminer");
     private static final String MOD_ID = "omniminer";
 
-    // カスタムタグ (data/omniminer/tags/blocks/ores.json)
+    // カスタムタグ (data/omniminer/tags/block/ores.json)
     public static final TagKey<Block> OREMINER_ORES = TagKey.of(RegistryKeys.BLOCK, Identifier.of(MOD_ID, "ores"));
 
     /**

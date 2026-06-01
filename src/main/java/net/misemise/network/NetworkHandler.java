@@ -35,7 +35,7 @@ public class NetworkHandler {
                 new CustomPayload.Id<>(VEIN_MINER_KEY_STATE_ID);
 
         public static final PacketCodec<RegistryByteBuf, VeinMinerKeyStatePayload> CODEC =
-                PacketCodecs.BOOLEAN.xmap(VeinMinerKeyStatePayload::new, VeinMinerKeyStatePayload::isPressed).cast();
+                PacketCodecs.BOOL.xmap(VeinMinerKeyStatePayload::new, VeinMinerKeyStatePayload::isPressed).cast();
 
         @Override
         public Id<? extends CustomPayload> getId() {

@@ -12,7 +12,7 @@ public class LogUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger("omniminer");
     private static final String MOD_ID = "omniminer";
 
-    // カスタムタグ (data/omniminer/tags/blocks/logs.json)
+    // カスタムタグ (data/omniminer/tags/block/logs.json)
     public static final TagKey<Block> OREMINER_LOGS =
             TagKey.of(RegistryKeys.BLOCK, Identifier.of(MOD_ID, "logs"));
 

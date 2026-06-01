@@ -68,27 +68,27 @@ public class BedrockVisualHelper {
         // 色に応じてパーティクルタイプを選択
         switch (colorIndex) {
             case 1: // Red
-                world.spawnParticles(player, ParticleTypes.DUST_PLUME, true, true,
+                world.spawnParticles(player, ParticleTypes.DUST_PLUME, true,
                         pos.x, pos.y, pos.z, 1, 0.0, 0.0, 0.0, 0.0);
                 break;
             case 2: // Yellow
-                world.spawnParticles(player, ParticleTypes.GLOW, true, true,
+                world.spawnParticles(player, ParticleTypes.GLOW, true,
                         pos.x, pos.y, pos.z, 1, 0.0, 0.0, 0.0, 0.0);
                 break;
             case 3: // Green
-                world.spawnParticles(player, ParticleTypes.HAPPY_VILLAGER, true, true,
+                world.spawnParticles(player, ParticleTypes.HAPPY_VILLAGER, true,
                         pos.x, pos.y, pos.z, 1, 0.0, 0.0, 0.0, 0.0);
                 break;
             case 4: // Purple
-                world.spawnParticles(player, ParticleTypes.PORTAL, true, true,
+                world.spawnParticles(player, ParticleTypes.PORTAL, true,
                         pos.x, pos.y, pos.z, 1, 0.0, 0.0, 0.0, 0.0);
                 break;
             case 5: // White
-                world.spawnParticles(player, ParticleTypes.END_ROD, true, true,
+                world.spawnParticles(player, ParticleTypes.END_ROD, true,
                         pos.x, pos.y, pos.z, 1, 0.0, 0.0, 0.0, 0.0);
                 break;
             default: // Cyan
-                world.spawnParticles(player, ParticleTypes.ELECTRIC_SPARK, true, true,
+                world.spawnParticles(player, ParticleTypes.ELECTRIC_SPARK, true,
                         pos.x, pos.y, pos.z, 1, 0.0, 0.0, 0.0, 0.0);
                 break;
         }

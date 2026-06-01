@@ -3,7 +3,6 @@ package net.misemise.keybind;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.util.Identifier;
 import net.misemise.OmniMiner;
 import org.lwjgl.glfw.GLFW;
 
@@ -14,9 +13,7 @@ public class KeyBindings {
     public static KeyBinding veinMinerKey;
     public static KeyBinding openConfigKey;
 
-    public static final KeyBinding.Category OREMINER_CATEGORY = KeyBinding.Category.create(
-            Identifier.of("omniminer", "general")
-    );
+    public static final String OREMINER_CATEGORY = "category.omniminer.general";
 
     public static void register() {
         // 一括採掘キー (V) - ゲームプレイカテゴリー
