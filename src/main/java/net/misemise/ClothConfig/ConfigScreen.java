@@ -25,11 +25,12 @@ public class ConfigScreen {
                                 Text.translatable("config.omniminer.category.mining"));
 
                 // 最大ブロック数
-                mining.addEntry(entryBuilder.startIntSlider(
+                mining.addEntry(entryBuilder.startIntField(
                                 Text.translatable("config.omniminer.maxBlocks"),
-                                Config.maxBlocks,
-                                1, 512)
+                                Config.maxBlocks)
                                 .setDefaultValue(64)
+                                .setMin(1)
+                                .setMax(512)
                                 .setTooltip(Text.translatable("config.omniminer.maxBlocks.tooltip"))
                                 .setSaveConsumer(value -> Config.maxBlocks = value)
                                 .build());
