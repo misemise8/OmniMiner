@@ -9,10 +9,10 @@ import net.misemise.ClothConfig.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Comparator;
+import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.Set;
 
 public final class BlockTargetUtils {
@@ -102,23 +102,14 @@ public final class BlockTargetUtils {
             return targets;
         }
 
-        int radius = radiusForMaxBlocks(maxBlocks);
-        int radiusSq = radius * radius;
         int[][] offsets = searchDiagonal ? DIAGONAL_OFFSETS : ADJACENT_OFFSETS;
         Set<BlockPos> visited = new HashSet<>();
-        PriorityQueue<BlockPos> queue = new PriorityQueue<>(Comparator
-                .comparingInt((BlockPos pos) -> distanceSq(startPos, pos))
-                .thenComparingInt(BlockPos::getY)
-                .thenComparingInt(BlockPos::getX)
-                .thenComparingInt(BlockPos::getZ));
+        Queue<BlockPos> queue = new ArrayDeque<>();
         queue.add(startPos);
+        visited.add(startPos);
 
         while (!queue.isEmpty() && targets.size() < maxBlocks) {
-            BlockPos pos = queue.poll();
-            if (!visited.add(pos) || distanceSq(startPos, pos) > radiusSq) {
-                continue;
-            }
-
+            BlockPos pos = queue.remove();
             BlockState currentState = world.getBlockState(pos);
             if (!currentState.is(targetState.getBlock()) || !canVeinMine(world, pos, currentState, heldItem)) {
                 continue;
@@ -128,7 +119,7 @@ public final class BlockTargetUtils {
 
             for (int[] offset : offsets) {
                 BlockPos next = pos.offset(offset[0], offset[1], offset[2]);
-                if (!visited.contains(next) && distanceSq(startPos, next) <= radiusSq) {
+                if (visited.add(next)) {
                     queue.add(next);
                 }
             }
@@ -163,33 +154,4 @@ public final class BlockTargetUtils {
         return offsets;
     }
 
-    private static int radiusForMaxBlocks(int maxBlocks) {
-        int radius = 0;
-        while (countBlocksInSphere(radius) < maxBlocks) {
-            radius++;
-        }
-        return radius;
-    }
-
-    private static int countBlocksInSphere(int radius) {
-        int radiusSq = radius * radius;
-        int count = 0;
-        for (int dx = -radius; dx <= radius; dx++) {
-            for (int dy = -radius; dy <= radius; dy++) {
-                for (int dz = -radius; dz <= radius; dz++) {
-                    if (dx * dx + dy * dy + dz * dz <= radiusSq) {
-                        count++;
-                    }
-                }
-            }
-        }
-        return count;
-    }
-
-    private static int distanceSq(BlockPos origin, BlockPos pos) {
-        int dx = pos.getX() - origin.getX();
-        int dy = pos.getY() - origin.getY();
-        int dz = pos.getZ() - origin.getZ();
-        return dx * dx + dy * dy + dz * dz;
-    }
 }
