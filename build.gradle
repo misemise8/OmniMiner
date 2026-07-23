@@ -13,7 +13,7 @@ base {
 repositories {
 	maven {
 		name = "TerraformersMC"
-		url = "https://maven.terraformersmc.com/"
+		url = "https://maven.terraformersmc.com/releases/"
 	}
 
 	maven {
@@ -21,16 +21,6 @@ repositories {
 		url = "https://maven.shedaniel.me/"
 	}
 
-	// Floodgate API用のリポジトリ
-	maven {
-		name = "opencollab-releases"
-		url = "https://repo.opencollab.dev/maven-releases/"
-	}
-
-	maven {
-		name = "opencollab-snapshots"
-		url = "https://repo.opencollab.dev/maven-snapshots/"
-	}
 }
 
 fabricApi {
@@ -52,11 +42,8 @@ dependencies {
 
 	}
 
-	//ModMenu
-	implementation "com.terraformersmc:modmenu:${project.modmenu_version}"
-
-	// Floodgate API (統合版プレイヤー検出用) - オプショナル
-	compileOnly "org.geysermc.floodgate:api:2.2.3-SNAPSHOT"
+	// Optional integration. Mod Menu loads the entrypoint only when installed.
+	compileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
 }
 
 processResources {
@@ -99,11 +86,19 @@ jar {
 	}
 }
 
+tasks.named("sourcesJar") {
+	inputs.property "archivesName", project.base.archivesName
+
+	from("LICENSE") {
+		rename { "${it}_${inputs.properties.archivesName}"}
+	}
+}
+
 // configure the maven publication
 publishing {
 	publications {
 		create("mavenJava", MavenPublication) {
-			artifactId = project.archives_base_name
+			artifactId = "${project.archives_base_name}-${project.minecraft_version}"
 			from components.java
 		}
 	}

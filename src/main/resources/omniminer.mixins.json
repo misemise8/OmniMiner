@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "package": "net.misemise.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "ServerPlayerGameModeMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

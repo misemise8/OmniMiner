@@ -4,6 +4,7 @@
   "config.omniminer.category.outline": "輪郭表示設定",
   "config.omniminer.category.bedrock": "統合版設定",
   "config.omniminer.category.other": "その他",
+  "config.omniminer.serverManaged": "採掘設定は接続先サーバーが管理しています。サーバー管理者は /omniminer set で変更できます。",
   "config.omniminer.maxBlocks": "最大ブロック数",
   "config.omniminer.maxBlocks.tooltip": "一度に破壊する最大ブロック数",
   "config.omniminer.searchDiagonal": "斜め方向も探索",

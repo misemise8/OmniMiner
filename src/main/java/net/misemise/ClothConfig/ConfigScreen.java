@@ -3,9 +3,12 @@ package net.misemise.ClothConfig;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.misemise.BedrockPlayerUtils;
+import net.misemise.client.ClientMiningConfig;
+import net.misemise.network.NetworkHandler;
 
 public class ConfigScreen {
         private static String lastOpenedCategory = "config.omniminer.category.mining"; // デフォルトは採掘設定
@@ -16,6 +19,11 @@ public class ConfigScreen {
                                 .setTitle(Component.translatable("config.omniminer.title"))
                                 .setSavingRunnable(() -> {
                                         Config.save();
+                                        var integratedServer = Minecraft.getInstance().getSingleplayerServer();
+                                        if (integratedServer != null) {
+                                                integratedServer.execute(() ->
+                                                                NetworkHandler.broadcastMiningConfig(integratedServer));
+                                        }
                                 });
 
                 ConfigEntryBuilder entryBuilder = builder.entryBuilder();
@@ -24,6 +32,14 @@ public class ConfigScreen {
                 ConfigCategory mining = builder.getOrCreateCategory(
                                 Component.translatable("config.omniminer.category.mining"));
 
+                boolean remoteServer = ClientMiningConfig.isSynchronizedWithServer()
+                                && !Minecraft.getInstance().hasSingleplayerServer();
+
+                if (remoteServer) {
+                        mining.addEntry(entryBuilder.startTextDescription(
+                                        Component.translatable("config.omniminer.serverManaged"))
+                                        .build());
+                } else {
                 // 最大ブロック数
                 mining.addEntry(entryBuilder.startIntSlider(
                                 Component.translatable("config.omniminer.maxBlocks"),
@@ -78,6 +94,7 @@ public class ConfigScreen {
                                 .setTooltip(Component.translatable("config.omniminer.includeBlockEntities.tooltip"))
                                 .setSaveConsumer(value -> Config.includeBlockEntities = value)
                                 .build());
+                }
 
                 // トグルモード
                 mining.addEntry(entryBuilder.startBooleanToggle(
@@ -86,18 +103,6 @@ public class ConfigScreen {
                                 .setDefaultValue(false)
                                 .setTooltip(Component.translatable("config.omniminer.toggleMode.tooltip"))
                                 .setSaveConsumer(value -> Config.toggleMode = value)
-                                .build());
-
-                // カスタムブロックリスト
-                mining.addEntry(entryBuilder.startStrList(
-                                Component.translatable("config.omniminer.customBlocks"),
-                                Config.customBlocks)
-                                .setDefaultValue(java.util.Collections.emptyList())
-                                .setTooltip(Component.translatable("config.omniminer.customBlocks.tooltip"))
-                                .setSaveConsumer(value -> {
-                                        Config.customBlocks = new java.util.ArrayList<>(value);
-                                        Config.save();
-                                })
                                 .build());
 
                 // ==================== アウトライン設定カテゴリ ====================

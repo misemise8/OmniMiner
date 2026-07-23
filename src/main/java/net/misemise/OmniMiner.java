@@ -2,17 +2,13 @@ package net.misemise;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
-import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.state.BlockState;
 import net.misemise.ClothConfig.Config;
 import net.misemise.network.NetworkHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Set;
 
 public class OmniMiner implements ModInitializer {
     public static final String MOD_ID = "omniminer";
@@ -24,12 +20,11 @@ public class OmniMiner implements ModInitializer {
 
         Config.load();
         net.misemise.command.OmniMinerCommand.register();
+        AutoCollector.register();
+        OreBreaker.register();
 
         if (BedrockPlayerUtils.isFloodgateAvailable()) {
             BedrockPreviewSystem.register();
-        }
-
-        if (BedrockPlayerUtils.isFloodgateAvailable()) {
             LOGGER.info("Floodgate detected - Bedrock Edition player support enabled!");
         } else {
             LOGGER.info("Floodgate not detected - Java Edition only mode");
@@ -41,14 +36,21 @@ public class OmniMiner implements ModInitializer {
             LOGGER.warn("NetworkHandler.registerServer() failed or already registered: {}", t.toString());
         }
 
+        registerBlockBreakEvents();
+    }
+
+    private static void registerBlockBreakEvents() {
         PlayerBlockBreakEvents.BEFORE.register((world, player, pos, state, entity) -> {
-            if (world.isClientSide()) {
+            if (!(world instanceof ServerLevel serverWorld)
+                    || !(player instanceof ServerPlayer serverPlayer)) {
                 return true;
             }
-            if (!(world instanceof ServerLevel serverWorld)) {
-                return true;
-            }
-            if (!(player instanceof ServerPlayer serverPlayer)) {
+
+            // Additional blocks are sent through the normal game-mode break
+            // path. Let this callback and every other Fabric listener approve
+            // or cancel each one without starting another vein-mining session.
+            if (OreBreaker.isProcessingAdditionalBreak(serverPlayer)
+                    || OreBreaker.isBusy(serverPlayer)) {
                 return true;
             }
 
@@ -58,43 +60,12 @@ public class OmniMiner implements ModInitializer {
             }
 
             boolean isBedrockPlayer = BedrockPlayerUtils.isBedrockPlayer(serverPlayer);
-            boolean shouldActivate = false;
-
+            boolean shouldActivate;
             if (isBedrockPlayer) {
-                if (Config.debugLog) {
-                    LOGGER.info("Bedrock player detected: {}",
-                            BedrockPlayerUtils.getPlayerPlatform(serverPlayer));
-                }
-
                 boolean isSneaking = serverPlayer.isShiftKeyDown();
-
-                if (Config.bedrockSneakEnable && isSneaking) {
-                    shouldActivate = true;
-                    if (Config.debugLog) {
-                        LOGGER.info("Bedrock player sneaking - vein mining activated");
-                    }
-                } else if (Config.bedrockAllowKeyBind
-                        && NetworkHandler.isKeyPressed(serverPlayer.getUUID())) {
-                    shouldActivate = true;
-                    if (Config.debugLog) {
-                        LOGGER.info("Bedrock player using keybind - vein mining activated");
-                    }
-                }
-
-                if (shouldActivate && Config.bedrockShowParticles) {
-                    try {
-                        Set<BlockPos> connectedBlocks = findConnectedBlocks(serverWorld, pos, state, held);
-
-                        if (Config.bedrockParticleMode == 1) {
-                            BedrockVisualHelper.showDetailedParticleOutline(serverWorld, connectedBlocks,
-                                    serverPlayer);
-                        } else {
-                            BedrockVisualHelper.showParticleOutline(serverWorld, connectedBlocks, serverPlayer);
-                        }
-                    } catch (Exception e) {
-                        LOGGER.warn("Failed to show particle preview for Bedrock player", e);
-                    }
-                }
+                shouldActivate = (Config.bedrockSneakEnable && isSneaking)
+                        || (Config.bedrockAllowKeyBind
+                        && NetworkHandler.isKeyPressed(serverPlayer.getUUID()));
             } else {
                 shouldActivate = NetworkHandler.isKeyPressed(serverPlayer.getUUID());
             }
@@ -103,19 +74,33 @@ public class OmniMiner implements ModInitializer {
                 return true;
             }
 
-            String blockType = BlockTargetUtils.blockType(state);
-            String playerType = isBedrockPlayer ? "Bedrock" : "Java";
-            LOGGER.info("Vein mining {} triggered at {} by {} player {}",
-                    blockType, pos, playerType, serverPlayer.getName().getString());
+            if (Config.debugLog) {
+                LOGGER.info("Preparing vein mining {} at {} for {} player {}",
+                        BlockTargetUtils.blockType(state),
+                        pos,
+                        isBedrockPlayer ? "Bedrock" : "Java",
+                        serverPlayer.getName().getString());
+            }
 
-            OreBreaker.breakConnectedOres(serverWorld, pos, state, serverPlayer, held);
-            return false;
+            OreBreaker.prepare(serverWorld, pos, state, serverPlayer, held);
+
+            // The starting block must be broken by Minecraft itself.
+            return true;
         });
-    }
 
-    private static Set<BlockPos> findConnectedBlocks(
-            ServerLevel world, BlockPos startPos, BlockState targetState, ItemStack heldItem) {
-        return BlockTargetUtils.findSphericalTargets(
-                world, startPos, targetState, heldItem, Config.maxBlocks, Config.searchDiagonal);
+        PlayerBlockBreakEvents.AFTER.register((world, player, pos, state, entity) -> {
+            if (world instanceof ServerLevel serverWorld
+                    && player instanceof ServerPlayer serverPlayer
+                    && !OreBreaker.isProcessingAdditionalBreak(serverPlayer)) {
+                OreBreaker.startPreparedBreak(serverWorld, pos, state, serverPlayer);
+            }
+        });
+
+        PlayerBlockBreakEvents.CANCELED.register((world, player, pos, state, entity) -> {
+            if (player instanceof ServerPlayer serverPlayer
+                    && !OreBreaker.isProcessingAdditionalBreak(serverPlayer)) {
+                OreBreaker.cancelPreparedBreak(serverPlayer, pos);
+            }
+        });
     }
 }

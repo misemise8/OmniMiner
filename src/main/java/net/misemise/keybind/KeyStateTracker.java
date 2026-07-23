@@ -12,6 +12,7 @@ import net.misemise.ClothConfig.Config;
 import net.misemise.ClothConfig.ConfigScreen;
 import net.misemise.OmniMiner;
 import net.misemise.client.BlockHighlightRenderer;
+import net.misemise.client.ClientMiningConfig;
 import net.misemise.client.VeinMiningHud;
 import net.misemise.network.NetworkHandler;
 
@@ -30,6 +31,15 @@ public class KeyStateTracker {
                 return;
             }
 
+            if (KeyBindings.wasOpenConfigPressed()) {
+                Minecraft.getInstance().setScreen(ConfigScreen.createConfigScreen(client.screen));
+            }
+
+            if (!NetworkHandler.canSendKeyState()) {
+                resetConnectionState();
+                return;
+            }
+
             boolean currentKeyPressed = KeyBindings.isVeinMinerKeyPressed();
 
             if (lastToggleMode && !Config.toggleMode && toggledOn) {
@@ -42,7 +52,9 @@ public class KeyStateTracker {
             if (Config.toggleMode) {
                 if (currentKeyPressed && !lastKeyState) {
                     toggledOn = !toggledOn;
-                    OmniMiner.LOGGER.info("Toggle mode switched: {}", toggledOn);
+                    if (Config.debugLog) {
+                        OmniMiner.LOGGER.info("Toggle mode switched: {}", toggledOn);
+                    }
                     NetworkHandler.sendKeyState(toggledOn);
                 }
                 lastKeyState = currentKeyPressed;
@@ -54,7 +66,9 @@ public class KeyStateTracker {
                 }
             } else {
                 if (currentKeyPressed != lastKeyState) {
-                    OmniMiner.LOGGER.info("Key state changed: {} -> {}", lastKeyState, currentKeyPressed);
+                    if (Config.debugLog) {
+                        OmniMiner.LOGGER.info("Key state changed: {} -> {}", lastKeyState, currentKeyPressed);
+                    }
                     NetworkHandler.sendKeyState(currentKeyPressed);
                     lastKeyState = currentKeyPressed;
                 }
@@ -66,12 +80,16 @@ public class KeyStateTracker {
                 }
             }
 
-            if (KeyBindings.wasOpenConfigPressed()) {
-                Minecraft.getInstance().setScreen(ConfigScreen.createConfigScreen(client.screen));
-            }
         });
 
         OmniMiner.LOGGER.info("KeyStateTracker registered");
+    }
+
+    public static void resetConnectionState() {
+        lastKeyState = false;
+        toggledOn = false;
+        lastToggleMode = Config.toggleMode;
+        clearHighlight();
     }
 
     private static void updateHighlight(Minecraft client) {
@@ -87,14 +105,27 @@ public class KeyStateTracker {
         BlockState targetState = client.level.getBlockState(targetPos);
         ItemStack heldItem = client.player.getMainHandItem();
 
-        if (!BlockTargetUtils.canVeinMine(client.level, targetPos, targetState, heldItem)) {
+        if (!BlockTargetUtils.canVeinMine(
+                client.level,
+                targetPos,
+                targetState,
+                heldItem,
+                ClientMiningConfig.includeBlockEntities())) {
             if (lastTargetKey != null) {
                 clearHighlight();
             }
             return;
         }
 
-        String targetKey = BlockTargetUtils.previewCacheKey(targetPos, targetState, heldItem);
+        String targetKey = BlockTargetUtils.previewCacheKey(
+                client.level,
+                targetPos,
+                targetState,
+                heldItem,
+                ClientMiningConfig.maxBlocks(),
+                ClientMiningConfig.searchDiagonal(),
+                ClientMiningConfig.includeBlockEntities(),
+                ClientMiningConfig.breakLeaves());
         if (targetKey.equals(lastTargetKey)) {
             return;
         }
@@ -114,8 +145,15 @@ public class KeyStateTracker {
 
     private static Set<BlockPos> findConnectedBlocks(Minecraft client, BlockPos startPos, BlockState targetState,
             ItemStack heldItem) {
-        return BlockTargetUtils.findSphericalTargets(
-                client.level, startPos, targetState, heldItem, Config.maxBlocks, Config.searchDiagonal);
+        return BlockTargetUtils.findMiningTargets(
+                client.level,
+                startPos,
+                targetState,
+                heldItem,
+                ClientMiningConfig.maxBlocks(),
+                ClientMiningConfig.searchDiagonal(),
+                ClientMiningConfig.includeBlockEntities(),
+                ClientMiningConfig.breakLeaves());
     }
 
     private static void clearHighlight() {
