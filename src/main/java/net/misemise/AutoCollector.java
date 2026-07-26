@@ -10,6 +10,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.phys.AABB;
+import net.misemise.mixin.ExperienceOrbAccessor;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -168,7 +169,7 @@ public final class AutoCollector {
             boolean collectItems,
             boolean collectExperience) {
         Map<Integer, Integer> itemCounts = new HashMap<>();
-        Map<Integer, Integer> experienceValues = new HashMap<>();
+        Map<Integer, Integer> experienceOrbCounts = new HashMap<>();
         AABB bounds = mergeBounds(pos);
 
         if (collectItems) {
@@ -178,7 +179,7 @@ public final class AutoCollector {
         }
         if (collectExperience) {
             for (ExperienceOrb orb : world.getEntitiesOfClass(ExperienceOrb.class, bounds)) {
-                experienceValues.put(orb.getId(), orb.getValue());
+                experienceOrbCounts.put(orb.getId(), getOrbCount(orb));
             }
         }
 
@@ -189,7 +190,7 @@ public final class AutoCollector {
                 collectItems,
                 collectExperience,
                 itemCounts,
-                experienceValues);
+                experienceOrbCounts);
     }
 
     private static void finishOriginalBreakCaptures() {
@@ -208,6 +209,10 @@ public final class AutoCollector {
         return new AABB(pos).inflate(MERGE_SEARCH_MARGIN);
     }
 
+    private static int getOrbCount(ExperienceOrb orb) {
+        return ((ExperienceOrbAccessor) (Object) orb).omniminer$getCount();
+    }
+
     public static final class DropCapture {
         private final ServerLevel world;
         private final BlockPos pos;
@@ -215,7 +220,7 @@ public final class AutoCollector {
         private final boolean collectItems;
         private final boolean collectExperience;
         private final Map<Integer, Integer> itemCounts;
-        private final Map<Integer, Integer> experienceValues;
+        private final Map<Integer, Integer> experienceOrbCounts;
         private boolean finished;
 
         private DropCapture(
@@ -225,14 +230,14 @@ public final class AutoCollector {
                 boolean collectItems,
                 boolean collectExperience,
                 Map<Integer, Integer> itemCounts,
-                Map<Integer, Integer> experienceValues) {
+                Map<Integer, Integer> experienceOrbCounts) {
             this.world = world;
             this.pos = pos;
             this.player = player;
             this.collectItems = collectItems;
             this.collectExperience = collectExperience;
             this.itemCounts = itemCounts;
-            this.experienceValues = experienceValues;
+            this.experienceOrbCounts = experienceOrbCounts;
         }
 
         private boolean matches(Entity entity, ServerLevel entityWorld) {
@@ -283,8 +288,8 @@ public final class AutoCollector {
             }
             if (collectExperience) {
                 for (ExperienceOrb orb : world.getEntitiesOfClass(ExperienceOrb.class, bounds)) {
-                    Integer oldValue = experienceValues.get(orb.getId());
-                    if (oldValue == null || orb.getValue() > oldValue) {
+                    Integer oldCount = experienceOrbCounts.get(orb.getId());
+                    if (oldCount == null || getOrbCount(orb) > oldCount) {
                         redirect(orb);
                     }
                 }
