@@ -211,15 +211,17 @@ public final class OreBreaker {
         try {
             NetworkHandler.sendBlocksMinedCount(
                     session.player(),
-                    session.blocksBroken(),
+                    session.displayBlocksBroken(),
                     session.blockType());
         } catch (Throwable error) {
             LOGGER.warn("Failed to send OmniMiner completion message", error);
         }
 
         if (Config.debugLog) {
-            LOGGER.info("Vein mining completed for {}: {} blocks",
-                    session.player().getName().getString(), session.blocksBroken());
+            LOGGER.info("Vein mining completed for {}: {} primary blocks, {} total blocks",
+                    session.player().getName().getString(),
+                    session.displayBlocksBroken(),
+                    session.totalBlocksBroken());
         }
     }
 
@@ -254,7 +256,8 @@ public final class OreBreaker {
         private final Queue<BlockPos> leafTargets = new ArrayDeque<>();
         private final Set<BlockPos> leafVisited = new HashSet<>();
         private final Set<BlockPos> removedLogPositions = new HashSet<>();
-        private int blocksBroken = 1;
+        private int totalBlocksBroken = 1;
+        private int primaryBlocksBroken = 1;
         private boolean stopped;
         private boolean leafPhaseInitialized;
         private long leavesReadyAtGameTime = -1L;
@@ -280,8 +283,12 @@ public final class OreBreaker {
             return prepared.blockType();
         }
 
-        int blocksBroken() {
-            return blocksBroken;
+        int totalBlocksBroken() {
+            return totalBlocksBroken;
+        }
+
+        int displayBlocksBroken() {
+            return primaryBlocksBroken;
         }
 
         void abort() {
@@ -289,7 +296,7 @@ public final class OreBreaker {
         }
 
         boolean isComplete() {
-            if (stopped || blocksBroken >= prepared.maxBlocks()) {
+            if (stopped || totalBlocksBroken >= prepared.maxBlocks()) {
                 return true;
             }
             if (!primaryTargets.isEmpty()) {
@@ -381,10 +388,11 @@ public final class OreBreaker {
                 return;
             }
 
-            blocksBroken++;
+            totalBlocksBroken++;
             if (leafTarget) {
                 enqueueLeafNeighbors(pos);
             } else {
+                primaryBlocksBroken++;
                 if (prepared.startedFromLog()) {
                     removedLogPositions.add(pos);
                 }
@@ -414,7 +422,7 @@ public final class OreBreaker {
         private boolean shouldProcessLeaves() {
             return prepared.breakLeaves()
                     && prepared.startedFromLog()
-                    && blocksBroken < prepared.maxBlocks();
+                    && totalBlocksBroken < prepared.maxBlocks();
         }
 
         private void initializeLeafTargets() {
@@ -426,7 +434,7 @@ public final class OreBreaker {
         }
 
         private void enqueuePrimaryNeighbors(BlockPos center) {
-            if (blocksBroken >= prepared.maxBlocks()) {
+            if (totalBlocksBroken >= prepared.maxBlocks()) {
                 return;
             }
 
@@ -439,7 +447,7 @@ public final class OreBreaker {
         }
 
         private void enqueueLeafNeighbors(BlockPos center) {
-            if (blocksBroken >= prepared.maxBlocks()) {
+            if (totalBlocksBroken >= prepared.maxBlocks()) {
                 return;
             }
 
