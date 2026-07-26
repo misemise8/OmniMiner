@@ -3,13 +3,14 @@
 	"id": "omniminer",
 	"version": "${version}",
 	"name": "OmniMiner",
-	"description": "Efficient Vein Mining Mod!!!",
+	"description": "Break connected blocks with server-authoritative limits, previews, automatic collection, and optional Floodgate support.",
 	"authors": [
 		"Misemise"
 	],
 	"contact": {
-		"homepage": "",
-		"contact and issue": "https://x.com/misemiseeeeeeee"
+		"homepage": "https://github.com/misemise8/OmniMiner",
+		"sources": "https://github.com/misemise8/OmniMiner",
+		"issues": "https://github.com/misemise8/OmniMiner/issues"
 	},
 	"license": "MIT",
 	"icon": "assets/omniminer/icon.png",
@@ -33,7 +34,7 @@
 	],
 	"depends": {
 		"fabricloader": ">=0.18.2",
-		"minecraft": "~1.21.11",
+		"minecraft": "1.21.11",
 		"java": ">=21",
 		"fabric-api": "*",
 		"cloth-config": ">=21.11.151"

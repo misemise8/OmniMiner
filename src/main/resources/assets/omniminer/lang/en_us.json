@@ -4,6 +4,7 @@
   "config.omniminer.category.outline": "Outline Settings",
   "config.omniminer.category.bedrock": "Bedrock Edition Settings",
   "config.omniminer.category.other": "Other Settings",
+  "config.omniminer.serverManaged": "Mining behavior is managed by this server. Server operators can change it with /omniminer set.",
   "config.omniminer.maxBlocks": "Max Blocks",
   "config.omniminer.maxBlocks.tooltip": "Maximum number of blocks to break at once",
   "config.omniminer.searchDiagonal": "Search Diagonal",

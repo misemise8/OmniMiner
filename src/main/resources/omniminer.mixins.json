@@ -3,7 +3,9 @@
 	"package": "net.misemise.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"ExampleMixin"
+		"ExperienceOrbAccessor",
+		"ExampleMixin",
+		"ServerPlayerInteractionManagerMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
